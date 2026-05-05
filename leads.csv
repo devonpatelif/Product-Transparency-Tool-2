@@ -1,0 +1,6 @@
+timestamp,email,trigger,ip,user_agent
+2026-04-30T15:44:01+00:00,alice@example.com,compare,127.0.0.1,"Mozilla/5.0 (Linux)"
+timestamp,email,trigger,ip,user_agent
+2026-04-30T15:44:01+00:00,'+leadingPlus@example.com,'-evil,127.0.0.1,"'=cmd|'/c calc'!A0"
+timestamp,email,phone,trigger,ip,user_agent
+2026-05-03T21:53:14+00:00,d.patel@industrialfinishes.com,,scan,127.0.0.1,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"

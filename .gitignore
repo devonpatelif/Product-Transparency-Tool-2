@@ -1,0 +1,7 @@
+# Sensitive config
+.env
+config.local.php
+
+# OS files
+.DS_Store
+Thumbs.db
