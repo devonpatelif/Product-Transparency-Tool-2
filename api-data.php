@@ -487,14 +487,33 @@ function handleMatch($catalog, $maxItems) {
         }
 
         // 2. Description-keyword fallback — only when the AI gave us a
-        //    description AND we can find ≥3 long-word overlaps. Returns at
-        //    most one option (the highest-scoring catalog row).
+        //    description AND we can find enough product-identifying word
+        //    overlaps. Returns at most one option (the highest-scoring
+        //    catalog row).
+        //
+        //    Two guards against false positives (e.g. "MIRLON SCUFF PAD VERY
+        //    FINE RED" matching "FIBRATEX SCUFF PAD VERY FINE MAROON" via
+        //    the generic words alone):
+        //      a. Stop-word list strips noisy descriptors that appear across
+        //         many SKUs and don't identify a product (sizes, colors-only,
+        //         abrasive grades, packaging units, status flags).
+        //      b. Score threshold of 4 (was 3) — three generic-adjective
+        //         overlaps is no longer enough; the match needs real
+        //         brand/noun-level overlap.
+        $descStopWords = [
+            'VERY','FINE','MEDIUM','COARSE','EXTRA','SUPER','ULTRA',
+            'BOX','CASE','PACK','EACH','ROLL','KIT','SET','BAG','PAIR',
+            'WITH','THIS','THAT','FROM','EACH','UNIT',
+            'NLA','NEW','USED','ONLY','SIZE',
+        ];
         if (count($matchOptions) === 0 && $extDesc !== '') {
             $words = array_filter(
                 preg_split('/\s+/', strtoupper($extDesc)),
-                function($w) { return strlen($w) > 3; }
+                function($w) use ($descStopWords) {
+                    return strlen($w) > 3 && !in_array($w, $descStopWords, true);
+                }
             );
-            if (count($words) >= 3) {
+            if (count($words) >= 4) {
                 $bestScore = 0; $bestIdx = -1;
                 for ($i = 0; $i < $descCap; $i++) {
                     $d = strtoupper($catalog[$i]['desc']);
@@ -502,7 +521,7 @@ function handleMatch($catalog, $maxItems) {
                     foreach ($words as $w) {
                         if ($w !== '' && strpos($d, $w) !== false) $score++;
                     }
-                    if ($score > $bestScore && $score >= 3) {
+                    if ($score > $bestScore && $score >= 4) {
                         $bestScore = $score;
                         $bestIdx = $i;
                     }

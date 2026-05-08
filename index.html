@@ -294,6 +294,88 @@ button,input,textarea,select{font:inherit;color:inherit}
   opacity:0;animation:fadeUp .9s var(--ease-out) .65s forwards;
 }
 
+/* HERO TABS — switch between upload and spot-check entry paths.
+   Pill-on-pill language matches .cf-tabs / .gate-tabs but sized
+   up for hero prominence. */
+.hero-tabs{
+  position:relative;z-index:1;
+  display:inline-flex;gap:0;padding:5px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;margin-bottom:24px;
+  opacity:0;animation:fadeUp .9s var(--ease-out) .75s forwards;
+}
+.hero-tab{
+  padding:10px 22px;border-radius:999px;background:transparent;border:none;
+  font-size:13px;font-weight:600;letter-spacing:-.005em;
+  color:var(--text-2);cursor:pointer;
+  transition:all .25s var(--ease-out);
+}
+.hero-tab:hover{color:var(--text)}
+.hero-tab.active{background:var(--text);color:var(--bg)}
+
+.hero-panel{
+  position:relative;z-index:1;width:100%;
+  display:flex;flex-direction:column;align-items:center;
+}
+.hero-panel[hidden]{display:none}
+/* Spot-check panel matches the upload panel's 64px bottom-margin
+   (already on .hero-actions) so the trust-row sits at the same
+   vertical position regardless of which tab is active. */
+#hero-panel-spotcheck{margin-bottom:64px}
+
+/* SPOT-CHECK FORM — three side-by-side inputs + Check button.
+   Inherits .gate-input language for focus glow + dark/light theming. */
+.hsc-form{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+  width:100%;max-width:760px;
+  opacity:0;animation:fadeUp 1s var(--ease-out) .85s forwards;
+}
+.hsc-input{
+  padding:14px 16px;border-radius:var(--r);
+  background:var(--bg-elev);border:1px solid var(--border);
+  color:var(--text);font-size:14px;outline:none;
+  transition:all .2s ease;font-variant-numeric:tabular-nums;
+}
+.hsc-input:focus{
+  border-color:var(--truth);background:var(--surface-2);
+  box-shadow:0 0 0 3px var(--truth-soft);
+}
+.hsc-input-part{flex:2;min-width:200px}
+.hsc-input-pay,.hsc-input-disc{flex:1;min-width:110px;max-width:140px}
+
+.hsc-submit{
+  position:relative;cursor:pointer;
+  padding:14px 22px;border-radius:var(--r);
+  background:var(--text);color:var(--bg);border:none;
+  font-size:14px;font-weight:700;letter-spacing:-.005em;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .25s var(--ease-out);overflow:hidden;white-space:nowrap;
+}
+.hsc-submit::before{
+  content:'';position:absolute;inset:0;background:var(--truth);
+  transform:translateY(101%);transition:transform .3s var(--ease-out);
+}
+.hsc-submit > *{position:relative;z-index:1}
+.hsc-submit:hover::before{transform:translateY(0)}
+.hsc-submit:disabled{opacity:.6;cursor:wait}
+.hsc-submit svg{width:14px;height:14px;transition:transform .25s var(--ease-out)}
+.hsc-submit:hover svg{transform:translateX(3px)}
+
+.hsc-error{
+  width:100%;font-size:13px;color:var(--inflation);font-weight:500;
+  margin-top:12px;text-align:center;
+}
+.hsc-fineprint{
+  margin-top:14px;font-size:11px;color:var(--text-3);
+  letter-spacing:.04em;
+}
+
+@media(max-width:680px){
+  .hsc-form{flex-direction:column;align-items:stretch}
+  .hsc-input-part,.hsc-input-pay,.hsc-input-disc{max-width:none;width:100%}
+  .hsc-submit{width:100%;justify-content:center}
+}
+
 .hero-actions{
   position:relative;z-index:1;
   display:flex;align-items:center;gap:20px;
@@ -846,7 +928,7 @@ body.in-flow .topbar{display:none}
 /* Extracted items list */
 .extracted-list{display:flex;flex-direction:column;gap:12px}
 .extracted-item{
-  display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:18px;
+  display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:18px;
   padding:18px 22px;border-radius:var(--r);
   background:var(--bg-elev);border:1px solid var(--border);
   opacity:0;transform:translateX(20px);
@@ -892,6 +974,28 @@ body.in-flow .topbar{display:none}
 .ext-input.changed{background:var(--truth-soft);animation:flashChanged .55s var(--ease-out)}
 @keyframes flashChanged{0%{background:var(--truth);color:var(--bg)}100%{background:var(--surface);color:var(--text)}}
 
+/* Remove button — dedicated grid column at the end of the row.
+   Always visible; tints red on hover to telegraph the destructive action. */
+.ext-remove{
+  width:34px;height:34px;border-radius:50%;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-3);cursor:pointer;
+  display:grid;place-items:center;
+  transition:all .2s ease;
+  flex-shrink:0;
+}
+.ext-remove:hover{
+  background:var(--inflation-soft);
+  border-color:var(--inflation);
+  color:var(--inflation);
+}
+.ext-remove:focus-visible{
+  outline:none;border-color:var(--inflation);
+  box-shadow:0 0 0 3px var(--inflation-soft);
+}
+.ext-remove svg{width:14px;height:14px;stroke-width:2.2}
+.extracted-item.removing{opacity:0;transform:translateX(-12px);transition:all .25s var(--ease-out)}
+
 .ext-result{text-align:right;min-width:110px;display:flex;flex-direction:column;align-items:flex-end;gap:1px}
 .ext-price-tag{
   font-size:9px;letter-spacing:.14em;text-transform:uppercase;
@@ -907,7 +1011,7 @@ body.in-flow .topbar{display:none}
 .ext-price-sub{font-size:11px;color:var(--text-3);font-weight:500;margin-top:2px;font-family:'JetBrains Mono',monospace}
 
 @media(max-width:760px){
-  .extracted-item{grid-template-columns:auto 1fr;gap:14px 16px}
+  .extracted-item{grid-template-columns:auto 1fr auto;gap:14px 16px}
   .ext-controls{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
   .ext-result{grid-column:1/-1;text-align:right;padding-top:10px;border-top:1px solid var(--border);min-width:0}
 }
@@ -950,7 +1054,16 @@ body.in-flow .topbar{display:none}
   background:var(--inflation-soft);border:1px solid var(--inflation-soft);
   font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--inflation);font-weight:700;
 }
-.verdict-eyebrow svg{width:12px;height:12px}
+.verdict-eyebrow .eb-icon{width:12px;height:12px}
+.verdict-eyebrow .eb-icon-fair{display:none}
+/* Fair-state flip — used when DEMO.markup ≤ 0. Swaps the warning triangle
+   for a check, and recolors the pill from inflation red to truth green. */
+.verdict-eyebrow.is-fair{
+  background:var(--truth-soft);border-color:var(--truth-soft);
+  color:var(--truth);
+}
+.verdict-eyebrow.is-fair .eb-icon-warn{display:none}
+.verdict-eyebrow.is-fair .eb-icon-fair{display:inline-block}
 
 .verdict-headline-wrap{
   display:inline-flex;flex-direction:column;align-items:center;
@@ -994,6 +1107,11 @@ body.in-flow .topbar{display:none}
   content:'';position:absolute;inset:8px;border-radius:50%;
   border:1px solid var(--inflation);opacity:.45;pointer-events:none;
 }
+/* Fair-state flip — used when DEMO.markup ≤ 0. Recolors the background
+   pad + inner ring from inflation red to truth green. The outer border
+   and text color follow currentColor (set inline in revealVerdict). */
+.verdict-stamp.is-fair{background:var(--truth-soft)}
+.verdict-stamp.is-fair::before{border-color:var(--truth)}
 .verdict-stamp .vs-content{
   position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:0 14px;
@@ -1088,6 +1206,17 @@ body.in-flow .topbar{display:none}
 }
 .va-cadence:hover{color:var(--inflation);border-bottom-color:var(--inflation)}
 
+/* Sentiment flip — used when DEMO.markup ≤ 0 (supplier list is honest /
+   under MSRP). Recolors the pill, icon, amount, and cadence-hover from
+   the default inflation red to the truth green, matching the headline. */
+.verdict-annual.is-fair{
+  background:var(--truth-soft);
+  border-color:var(--truth-glow);
+}
+.verdict-annual.is-fair .va-icon,
+.verdict-annual.is-fair .va-amount{color:var(--truth)}
+.verdict-annual.is-fair .va-cadence:hover{color:var(--truth);border-bottom-color:var(--truth)}
+
 /* GAUGE — sweeping arc */
 /* ─── MARKUP BARS — replaces the abstract gauge with three proportional
    horizontal bars: supplier's claimed list, you-paid, and MSRP. The
@@ -1176,6 +1305,16 @@ body.in-flow .topbar{display:none}
 .mb-bar-paid + .mb-bar-value{color:var(--text)}
 .mb-bar-msrp + .mb-bar-value{color:var(--truth)}
 
+/* When the verdict stage is in fair mode (DEMO.markup ≤ 0), the supplier's
+   list isn't the bad guy — it's already at or below MSRP. Flip the THEIR
+   LIST text in the verdict-pair and the SUPPLIER LIST bar (fill + value)
+   from inflation red to truth green so the visual story matches the data. */
+.stage-verdict.is-fair .vp-val.vp-bad{color:var(--truth)}
+.stage-verdict.is-fair .mb-bar-list .mb-bar-fill{
+  background:linear-gradient(90deg,var(--truth-soft),var(--truth));
+}
+.stage-verdict.is-fair .mb-bar-list + .mb-bar-value{color:var(--truth)}
+
 /* Tag callouts on the labels — small badges with a contextual message */
 .mb-label-tag{
   display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;
@@ -1259,10 +1398,12 @@ body.in-flow .topbar{display:none}
 .ledger-table tfoot{background:var(--surface)}
 .ledger-table tfoot td{padding:18px 14px;font-size:15px;font-weight:700;border-top:2px solid var(--border)}
 .ledger-table tfoot td.num{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
-/* Markup total: plain text in inflation red, matches the other total cells. */
+/* Markup total: red by default (inflation); flipped to green via .fair
+   when the supplier's list lands at or below MSRP (savings, not markup). */
 .ledger-total-pill{
   color:var(--inflation);font-weight:700;
 }
+.ledger-total-pill.fair{color:var(--truth)}
 
 /* ─── ACT 4: RESOLUTION ─────────────────────────────────────── */
 .stage-resolution{padding-top:16px;padding-bottom:120px}
@@ -1465,6 +1606,86 @@ body.in-flow .topbar{display:none}
 .gate-fineprint{margin-top:14px;font-size:11px;color:var(--text-3);line-height:1.5}
 
 /* ════════════════════════════════════════════════════════════════
+   ADD-ITEM (button below extracted list + modal)
+   ════════════════════════════════════════════════════════════════ */
+.add-item-trigger{
+  margin-top:14px;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 18px;border-radius:var(--r);
+  background:transparent;border:1px dashed var(--border-strong);
+  color:var(--text-2);font-size:13px;font-weight:600;letter-spacing:-.005em;
+  cursor:pointer;transition:all .25s var(--ease-out);
+}
+.add-item-trigger:hover{
+  color:var(--text);border-color:var(--truth);
+  background:var(--truth-faint);
+}
+.add-item-trigger svg{width:16px;height:16px}
+
+.add-item{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;padding:24px}
+.add-item[data-open="1"]{display:flex}
+.add-item-backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,.55);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  animation:gateFade .25s var(--ease-out);
+}
+[data-theme="light"] .add-item-backdrop{background:rgba(15,20,30,.45)}
+.add-item-card{
+  position:relative;width:min(500px,100%);
+  background:var(--bg-elev);border:1px solid var(--border-strong);
+  border-radius:var(--r-lg);
+  padding:36px 32px 28px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+  animation:gatePop .35s var(--ease-spring);
+}
+.add-item-close{
+  position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;
+  background:transparent;border:none;color:var(--text-3);cursor:pointer;
+  display:grid;place-items:center;transition:all .2s ease;
+}
+.add-item-close:hover{color:var(--text);background:var(--surface)}
+.add-item-close svg{width:16px;height:16px}
+.add-item-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 12px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-2);margin-bottom:16px;
+}
+.add-item-title{
+  font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;
+  line-height:1.15;letter-spacing:-.02em;color:var(--text);margin-bottom:10px;
+}
+.add-item-sub{font-size:14px;color:var(--text-2);line-height:1.5;margin-bottom:22px}
+.add-item-form{display:flex;flex-direction:column;gap:10px}
+.add-item-row{display:flex;gap:10px}
+.add-item-row .add-item-input{flex:1;min-width:0}
+.add-item-input{
+  padding:13px 16px;border-radius:var(--r);
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  font-size:14px;outline:none;transition:all .2s ease;
+  font-variant-numeric:tabular-nums;
+}
+.add-item-input:focus{border-color:var(--truth);background:var(--surface-2);box-shadow:0 0 0 3px var(--truth-soft)}
+.add-item-disambig{display:flex;flex-direction:column;gap:6px}
+.add-item-disambig-label{font-size:12px;color:var(--text-2);font-weight:500}
+.add-item-submit{
+  margin-top:6px;
+  padding:13px 22px;border-radius:var(--r);
+  background:var(--text);color:var(--bg);border:none;cursor:pointer;
+  font-size:14px;font-weight:700;letter-spacing:-.005em;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .25s var(--ease-out);position:relative;overflow:hidden;
+}
+.add-item-submit::before{content:'';position:absolute;inset:0;background:var(--truth);transform:translateY(101%);transition:transform .3s var(--ease-out)}
+.add-item-submit > *{position:relative;z-index:1}
+.add-item-submit:hover::before{transform:translateY(0)}
+.add-item-submit:disabled{opacity:.6;cursor:wait}
+.add-item-submit svg{width:14px;height:14px;transition:transform .25s var(--ease-out)}
+.add-item-submit:hover svg{transform:translateX(3px)}
+.add-item-error{margin-top:12px;font-size:13px;color:var(--inflation);font-weight:500}
+
+/* ════════════════════════════════════════════════════════════════
    TOAST
    ════════════════════════════════════════════════════════════════ */
 .toast{
@@ -1541,23 +1762,60 @@ body.in-flow .topbar{display:none}
 
   <p class="lede">Drop in any quote or invoice. We compare every line item against manufacturer&nbsp;MSRP and show you exactly where the markup is hiding — line by line, dollar by dollar.</p>
 
-  <div class="hero-actions">
-    <label class="dropzone" id="dropzone" for="file-input" tabindex="0" aria-label="Upload an invoice or quote">
-      <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
-      <span class="dz-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </span>
-      <span class="dz-text">
-        <span class="dz-title">Drop your invoice or quote</span>
-        <span class="dz-sub">PDF, JPG, PNG · click to browse</span>
-      </span>
-    </label>
-
-    <button class="btn-demo" id="try-demo" type="button">
-      <span class="pulse-dot" aria-hidden="true"></span>
-      <span>See a sample report</span>
-      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  <div class="hero-tabs" role="tablist" aria-label="How to start">
+    <button class="hero-tab active" id="hero-tab-upload" data-mode="upload"
+            role="tab" aria-selected="true" aria-controls="hero-panel-upload" type="button">
+      Upload invoice
     </button>
+    <button class="hero-tab" id="hero-tab-spotcheck" data-mode="spotcheck"
+            role="tab" aria-selected="false" aria-controls="hero-panel-spotcheck" type="button">
+      Spot-check a part
+    </button>
+  </div>
+
+  <div class="hero-panel" id="hero-panel-upload" role="tabpanel" aria-labelledby="hero-tab-upload">
+    <div class="hero-actions">
+      <label class="dropzone" id="dropzone" for="file-input" tabindex="0" aria-label="Upload an invoice or quote">
+        <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
+        <span class="dz-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="dz-text">
+          <span class="dz-title">Drop your invoice or quote</span>
+          <span class="dz-sub">PDF, JPG, PNG · click to browse</span>
+        </span>
+      </label>
+
+      <button class="btn-demo" id="try-demo" type="button">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span>See a sample report</span>
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="hero-panel" id="hero-panel-spotcheck" role="tabpanel"
+       aria-labelledby="hero-tab-spotcheck" hidden>
+    <form class="hsc-form" id="hsc-form" novalidate>
+      <input type="text" class="hsc-input hsc-input-part" id="hsc-part"
+             placeholder="Part # or product name" autocomplete="off"
+             aria-label="Part number or product name" required>
+      <input type="number" class="hsc-input hsc-input-pay" id="hsc-pay"
+             placeholder="You pay $" min="0" step="0.01" inputmode="decimal"
+             autocomplete="off" aria-label="What you paid per unit" required>
+      <input type="number" class="hsc-input hsc-input-disc" id="hsc-disc"
+             placeholder="Disc %" min="0" max="99" step="0.5" inputmode="decimal"
+             autocomplete="off" aria-label="Stated discount percent" required>
+      <button type="submit" class="hsc-submit" id="hsc-submit">
+        <span>Check</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </form>
+    <div class="hsc-error" id="hsc-error" hidden></div>
+    <p class="hsc-fineprint">No upload, no AI cost — we just match against the catalog.</p>
   </div>
 
   <div class="trust-row" id="trust-row">
@@ -1580,7 +1838,7 @@ body.in-flow .topbar{display:none}
   <div class="es-grid">
     <div class="es-card reveal">
       <div class="es-supplier">Distributor A</div>
-      <div class="es-row"><span class="es-row-label">Their list</span><span class="es-row-val">$159.00</span></div>
+      <div class="es-row"><span class="es-row-label">Supplier list price</span><span class="es-row-val">$159.00</span></div>
       <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">35% off</span></div>
       <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$103.35</span></div>
       <div class="es-divider"></div>
@@ -1592,7 +1850,7 @@ body.in-flow .topbar{display:none}
     </div>
     <div class="es-card reveal">
       <div class="es-supplier">Distributor B</div>
-      <div class="es-row"><span class="es-row-label">Their list</span><span class="es-row-val">$1,450.00</span></div>
+      <div class="es-row"><span class="es-row-label">Supplier list price</span><span class="es-row-val">$1,450.00</span></div>
       <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">30% off</span></div>
       <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$1,015.00</span></div>
       <div class="es-divider"></div>
@@ -1604,7 +1862,7 @@ body.in-flow .topbar{display:none}
     </div>
     <div class="es-card reveal">
       <div class="es-supplier">Distributor C</div>
-      <div class="es-row"><span class="es-row-label">Their list</span><span class="es-row-val">$245.00</span></div>
+      <div class="es-row"><span class="es-row-label">Supplier list price</span><span class="es-row-val">$245.00</span></div>
       <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">40% off</span></div>
       <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$147.00</span></div>
       <div class="es-divider"></div>
@@ -1683,7 +1941,7 @@ body.in-flow .topbar{display:none}
   <section class="stage stage-evidence" id="stage-evidence" hidden>
     <div class="evidence-eyebrow"><span class="eb-line"></span>Step 1 of 3 · Evidence</div>
     <h2 class="evidence-title">We pulled <em><span id="evidence-count">6</span> line items</em> from your invoice.</h2>
-    <p class="evidence-sub">All matched to manufacturer pricing. <strong style="color:var(--text)">Edit any quantity, supplier list, or stated discount</strong> — your line totals recalculate live. Hit reveal when ready.</p>
+    <p class="evidence-sub">All matched to manufacturer pricing. <strong style="color:var(--text)">Edit any quantity, supplier list price, or stated discount</strong> — your line totals recalculate live. Hit reveal when ready.</p>
 
     <div class="evidence-split">
       <aside class="invoice-card">
@@ -1719,6 +1977,10 @@ body.in-flow .topbar{display:none}
           <div class="disc-apply-menu" id="disc-apply-menu" role="menu"></div>
         </div>
         <div class="extracted-list" id="extracted-list"></div>
+        <button class="add-item-trigger" id="add-item-trigger" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Add another item</span>
+        </button>
       </div>
     </div>
 
@@ -1733,7 +1995,8 @@ body.in-flow .topbar{display:none}
   <!-- ─── STAGE C: VERDICT ─────────────────────────── -->
   <section class="stage stage-verdict" id="stage-verdict" hidden>
     <div class="verdict-eyebrow">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      <svg class="eb-icon eb-icon-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      <svg class="eb-icon eb-icon-fair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
       Verdict in
     </div>
 
@@ -1761,7 +2024,7 @@ body.in-flow .topbar{display:none}
         </div>
       </div>
       <div class="vp-cell">
-        <div class="vp-label">Their list</div>
+        <div class="vp-label">Supplier list price</div>
         <div class="vp-val vp-bad">$<span class="num-tween" id="vp-list-amt" data-target="0" data-decimals="2">0</span></div>
       </div>
       <div class="vp-cell">
@@ -1774,9 +2037,9 @@ body.in-flow .topbar{display:none}
       <span class="va-icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </span>
-      <span>At <button type="button" class="va-cadence" id="va-cadence" data-mult="12" title="Click to change reorder cadence">monthly</button> cadence, that's</span>
+      <span>At <button type="button" class="va-cadence" id="va-cadence" data-mult="12" title="Click to change reorder cadence">monthly</button> <span id="va-mid">cadence, that's</span></span>
       <span class="va-amount">$<span class="num-tween" id="va-annual" data-target="0" data-decimals="0">0</span><span class="va-yr">/yr</span></span>
-      <span>in <strong>annual savings</strong>.</span>
+      <span id="va-suffix">in <strong>annual savings</strong>.</span>
     </div>
 
     <div class="markup-bars" id="markup-bars">
@@ -1784,7 +2047,7 @@ body.in-flow .topbar{display:none}
 
       <div class="mb-row">
         <div class="mb-label">
-          <span class="mb-label-main">Supplier list</span>
+          <span class="mb-label-main">Supplier list price</span>
           <span class="mb-label-sub">what they "discount" from</span>
         </div>
         <div class="mb-bar mb-bar-list">
@@ -1844,7 +2107,7 @@ body.in-flow .topbar{display:none}
           <tr>
             <th>Item</th>
             <th class="num">Qty</th>
-            <th class="num">Supplier list</th>
+            <th class="num">Supplier list price</th>
             <th class="num">You paid</th>
             <th class="num">MSRP</th>
             <th class="num">Markup</th>
@@ -1938,6 +2201,48 @@ body.in-flow .topbar{display:none}
   </div>
 </footer>
 
+<!-- ═══════════════ ADD-ITEM MODAL ═══════════════ -->
+<!-- Lets the user append an extra line item to an in-progress invoice
+     review without re-uploading. POSTs to api-data.php?op=match (no
+     Vision call). If multiple catalog rows match, an inline picker
+     replaces the form so the user can resolve ambiguity in place. -->
+<div class="add-item" id="add-item" hidden role="dialog" aria-modal="true" aria-labelledby="add-item-title">
+  <div class="add-item-backdrop" id="add-item-backdrop"></div>
+  <div class="add-item-card">
+    <button class="add-item-close" id="add-item-close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="add-item-eyebrow"><span class="eyebrow-dot"></span>Add another line</div>
+    <h3 class="add-item-title" id="add-item-title">Add a part to your invoice</h3>
+    <p class="add-item-sub">We'll match it against the catalog and recalculate your markup live.</p>
+    <form class="add-item-form" id="add-item-form" novalidate>
+      <input type="text" class="add-item-input add-item-input-part" id="add-item-part"
+             placeholder="Part # or product name" autocomplete="off"
+             aria-label="Part number or product name" required>
+      <div class="add-item-row">
+        <input type="number" class="add-item-input" id="add-item-qty"
+               placeholder="Qty" min="1" step="1" inputmode="numeric"
+               value="1" autocomplete="off" aria-label="Quantity" required>
+        <input type="number" class="add-item-input" id="add-item-pay"
+               placeholder="You pay $" min="0" step="0.01" inputmode="decimal"
+               autocomplete="off" aria-label="What you paid per unit" required>
+        <input type="number" class="add-item-input" id="add-item-disc"
+               placeholder="Disc %" min="0" max="99" step="0.5" inputmode="decimal"
+               autocomplete="off" aria-label="Stated discount percent" required>
+      </div>
+      <div class="add-item-disambig" id="add-item-disambig" hidden>
+        <label class="add-item-disambig-label" for="add-item-disambig-select">Multiple matches found — pick the right one:</label>
+        <select class="add-item-input add-item-disambig-select" id="add-item-disambig-select"></select>
+      </div>
+      <button type="submit" class="add-item-submit" id="add-item-submit">
+        <span>Add to invoice</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </form>
+    <div class="add-item-error" id="add-item-error" hidden></div>
+  </div>
+</div>
+
 <!-- ═══════════════ LEAD GATE MODAL ═══════════════ -->
 <!-- Hard gate before high-value actions (real upload, CSV export). Captured
      value is POSTed to api-email.php and persisted in localStorage so the
@@ -1950,7 +2255,7 @@ body.in-flow .topbar{display:none}
     </button>
     <div class="gate-eyebrow"><span class="eyebrow-dot"></span>One quick step</div>
     <h3 class="gate-title" id="gate-title">Reveal your full markup.</h3>
-    <p class="gate-sub" id="gate-sub">See every dollar of inflation on your invoice — line by line, supplier list versus manufacturer MSRP.</p>
+    <p class="gate-sub" id="gate-sub">See every dollar of inflation on your invoice — line by line, supplier list price versus manufacturer MSRP.</p>
     <div class="gate-tabs" role="tablist" aria-label="Contact method">
       <button class="gate-tab active" data-mode="email" role="tab" aria-selected="true" type="button">Email</button>
       <button class="gate-tab" data-mode="phone" role="tab" aria-selected="false" type="button">Phone</button>
@@ -2163,7 +2468,7 @@ const LEAD_KEY = 'ifs_lead';
 // not us promising a deliverable. Keeps the gate honest — there's nothing
 // we have to send by email if a captured lead never gets a follow-up.
 const GATE_COPY = {
-  scan:    { title:'Reveal your full markup.',           sub:"See every dollar of inflation on your invoice — line by line, supplier list versus manufacturer MSRP." },
+  scan:    { title:'Reveal your full markup.',           sub:"See every dollar of inflation on your invoice — line by line, supplier list price versus manufacturer MSRP." },
   export:  { title:'Save your markup report.',           sub:"Yours to keep — every line, every dollar, ready for the next supplier conversation." },
   audit:   { title:'See your real numbers.',             sub:"Get the full breakdown of where your supplier's discount is fake — every part number, every line." },
   default: { title:'Unlock your full markup analysis.',  sub:"See exactly where the inflation is hiding." },
@@ -2367,6 +2672,440 @@ async function submitLead({ email, phone, trigger }){
     if(e.key==='Enter' || e.key===' '){ e.preventDefault(); input.click(); }
   });
 })();
+
+/* ════════════════════════════════════════════════════════════════
+   HERO TABS — toggle between upload and spot-check panels.
+   Tab swap must feel instant. Both panels' inner content (.hero-actions,
+   .hsc-form) carry an 0.85s-delayed fadeUp for the initial page-load
+   choreography. CSS animations re-fire when an element transitions from
+   display:none to visible, so without intervention every tab click would
+   replay the 1.85s entry animation. We pin the inner content to its
+   final state once the initial choreography has finished.
+   ════════════════════════════════════════════════════════════════ */
+(function heroTabs(){
+  const tabs = $$('.hero-tab');
+  const panels = {
+    upload:    $('#hero-panel-upload'),
+    spotcheck: $('#hero-panel-spotcheck'),
+  };
+
+  function pinPanelContent(){
+    document.querySelectorAll('.hero-actions, .hsc-form').forEach(el=>{
+      el.style.animation = 'none';
+      el.style.opacity   = '1';
+    });
+  }
+  // Initial load: let the staggered entry animations play, then pin so
+  // subsequent tab swaps are instant. 1900ms = 0.85s delay + 1s duration
+  // + a frame of slack.
+  setTimeout(pinPanelContent, 1900);
+
+  tabs.forEach(t=>t.addEventListener('click', ()=>{
+    const mode = t.dataset.mode;
+    // Belt-and-suspenders: pin on first interaction too, in case the user
+    // clicks a tab before the 1900ms timer has fired.
+    pinPanelContent();
+    tabs.forEach(x=>{
+      const on = x === t;
+      x.classList.toggle('active', on);
+      x.setAttribute('aria-selected', on);
+    });
+    Object.entries(panels).forEach(([key, el])=>{
+      if(!el) return;
+      el.hidden = (key !== mode);
+    });
+    if(mode === 'spotcheck') $('#hsc-part').focus();
+  }));
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   SPOT-CHECK — type one part #, skip Vision, full verdict.
+   Reuses MATCH_URL, runDisambig, computeInvoice, revealVerdict.
+   Ungated like the demo path — single match-endpoint hit costs nothing.
+   ════════════════════════════════════════════════════════════════ */
+(function spotCheck(){
+  const form  = $('#hsc-form');
+  const part  = $('#hsc-part');
+  const pay   = $('#hsc-pay');
+  const disc  = $('#hsc-disc');
+  const submit= $('#hsc-submit');
+  const errEl = $('#hsc-error');
+  const submitLabel = submit.querySelector('span');
+  const originalLabel = submitLabel.textContent;
+
+  function showErr(msg, focusEl){
+    errEl.textContent = msg;
+    errEl.hidden = false;
+    if(focusEl) focusEl.focus();
+  }
+  function clearErr(){
+    errEl.hidden = true;
+    errEl.textContent = '';
+  }
+
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    clearErr();
+    const partVal = part.value.trim();
+    const payVal  = Number(pay.value);
+    const discVal = Number(disc.value);
+
+    if(!partVal){ showErr('Enter a part number or product name.', part); return; }
+    if(!Number.isFinite(payVal) || payVal <= 0){
+      showErr('What you paid must be a positive number.', pay); return;
+    }
+    if(!Number.isFinite(discVal) || discVal < 0 || discVal >= 99){
+      showErr('Discount must be between 0 and 99.', disc); return;
+    }
+
+    submit.disabled = true;
+    submitLabel.textContent = 'Checking…';
+    runSpotCheck(partVal, payVal, discVal).catch(err=>{
+      console.error('Spot-check failed:', err);
+      showErr(err.message || 'Could not check that part right now.');
+    }).finally(()=>{
+      submit.disabled = false;
+      submitLabel.textContent = originalLabel;
+    });
+  });
+})();
+
+async function runSpotCheck(partInput, payInput, discInput){
+  if(flowStarted) return;
+  flowStarted = true;
+
+  // Surface management mirrors launchFlow().
+  const flow = $('#flow');
+  flow.classList.add('active');
+  document.body.classList.add('in-flow');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+
+  const scanStage = $('#stage-scan');
+  scanStage.hidden = false;
+  void scanStage.offsetWidth;
+  scanStage.classList.add('visible');
+  setStatus('Looking up your part');
+
+  // Single-row payload; the match endpoint accepts the same shape the
+  // multi-line flow sends.
+  const payload = {
+    items: [{
+      partNumber: partInput,
+      description: '',
+      quantity: 1,
+      unitPrice: payInput,
+      discountPercent: discInput,
+    }]
+  };
+
+  let results;
+  try {
+    const resp = await fetch(MATCH_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    if(!resp.ok) throw new Error(`Match failed (${resp.status})`);
+    const data = await resp.json();
+    results = Array.isArray(data.results) ? data.results : [];
+  } catch(err){
+    flowStarted = false;
+    showScanError(err.message || 'We could not reach the catalog. Try again.');
+    throw err;
+  }
+
+  // Auto-resolve when every candidate shares the same MSRP — mirrors
+  // runRealScan so behavior is consistent across upload + spot-check.
+  results.forEach(r => {
+    if(r.ambiguous && Array.isArray(r.matchOptions) && r.matchOptions.length > 1){
+      const firstPrice = Number(r.matchOptions[0].price);
+      if(r.matchOptions.every(o => Number(o.price) === firstPrice)){
+        r.ambiguous = false;
+      }
+    }
+  });
+
+  const r0 = results[0];
+  if(!r0 || !r0.matched || !r0.catalog){
+    flowStarted = false;
+    showScanError(`No catalog match for "${esc(partInput)}". Try the full part number or a different product name.`);
+    return;
+  }
+
+  // Reuse the disambig modal exactly as the multi-item flow does. The
+  // UI doesn't care that results.length === 1.
+  const stillAmbiguous = r0.ambiguous && Array.isArray(r0.matchOptions) && r0.matchOptions.length > 1;
+  if(stillAmbiguous){
+    await runDisambig(results);
+  }
+
+  setStatus('Calculating markup');
+  await sleep(450);
+
+  const cat  = r0.catalog;
+  const msrp = Number(cat.price) || 0;
+  if(msrp <= 0){
+    flowStarted = false;
+    showScanError('We found that part, but our catalog has no MSRP for it yet.');
+    return;
+  }
+
+  // Synthetic 1-item invoice fed to the same downstream stages.
+  activeInvoice = {
+    supplier: 'Spot-check',
+    invoiceNum: '',
+    date: '',
+    items: [{
+      part:     cat.part || partInput,
+      desc:     cat.desc || partInput,
+      category: cat.catName || cat.category || 'Spot-check',
+      qty:      1,
+      pay:      payInput,
+      disc:     discInput,
+      msrp,
+    }],
+  };
+  DEMO = computeInvoice(activeInvoice);
+
+  // Dismiss the loading overlay (mirrors launchFlow).
+  scanStage.classList.remove('visible');
+  await sleep(450);
+  scanStage.hidden = true;
+  document.body.style.overflow = '';
+
+  // Skip evidence — the user typed the values, nothing to verify.
+  await revealVerdict();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ADD-ITEM MODAL — append a new line item to an in-progress invoice
+   review without re-uploading. Hits the same MATCH_URL the upload
+   pipeline uses; resolves ambiguous matches inline via a select.
+   ════════════════════════════════════════════════════════════════ */
+(function addItemModal(){
+  const modal     = $('#add-item');
+  if(!modal) return;
+  const trigger   = $('#add-item-trigger');
+  const backdrop  = $('#add-item-backdrop');
+  const closeBtn  = $('#add-item-close');
+  const form      = $('#add-item-form');
+  const partIn    = $('#add-item-part');
+  const qtyIn     = $('#add-item-qty');
+  const payIn     = $('#add-item-pay');
+  const discIn    = $('#add-item-disc');
+  const submit    = $('#add-item-submit');
+  const submitLbl = submit.querySelector('span');
+  const errEl     = $('#add-item-error');
+  const disambig  = $('#add-item-disambig');
+  const select    = $('#add-item-disambig-select');
+
+  // State carried between submits when we drop into disambig mode:
+  // `pendingOptions` is the matchOptions array; `pendingExtracted` is
+  // the user's typed values. Cleared on close/successful add.
+  let pendingOptions = null;
+  let pendingExtracted = null;
+  let lastFocused = null;
+
+  function setError(msg){
+    if(msg){ errEl.textContent = msg; errEl.hidden = false; }
+    else   { errEl.textContent = '';  errEl.hidden = true;  }
+  }
+  function resetForm(){
+    form.reset();
+    qtyIn.value = '1';
+    disambig.hidden = true;
+    select.innerHTML = '';
+    pendingOptions = null;
+    pendingExtracted = null;
+    submit.disabled = false;
+    submitLbl.textContent = 'Add to invoice';
+    setError('');
+  }
+  function open(){
+    resetForm();
+    lastFocused = document.activeElement;
+    modal.hidden = false;
+    modal.dataset.open = '1';
+    setTimeout(()=>partIn.focus(), 80);
+  }
+  function close(){
+    modal.dataset.open = '';
+    modal.hidden = true;
+    resetForm();
+    if(lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  trigger.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', e=>{
+    if(modal.dataset.open !== '1') return;
+    if(e.key==='Escape'){ e.preventDefault(); close(); }
+  });
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    setError('');
+
+    const partVal = partIn.value.trim();
+    const qtyVal  = Number(qtyIn.value);
+    const payVal  = Number(payIn.value);
+    const discVal = Number(discIn.value);
+
+    if(!partVal){ setError('Enter a part number or product name.'); partIn.focus(); return; }
+    if(!Number.isFinite(qtyVal) || qtyVal < 1){ setError('Quantity must be at least 1.'); qtyIn.focus(); return; }
+    if(!Number.isFinite(payVal) || payVal <= 0){ setError('What you paid must be a positive number.'); payIn.focus(); return; }
+    if(!Number.isFinite(discVal) || discVal < 0 || discVal >= 99){ setError('Discount must be between 0 and 99.'); discIn.focus(); return; }
+
+    submit.disabled = true;
+    submitLbl.textContent = 'Looking up…';
+
+    try {
+      // Disambig branch — second submit after the user picked a candidate.
+      if(pendingOptions){
+        const idx = Number(select.value);
+        const cat = pendingOptions[idx];
+        if(!cat){ throw new Error('Pick one of the candidates to continue.'); }
+        appendEvidenceItem(cat, pendingExtracted);
+        close();
+        showToast('Item added');
+        return;
+      }
+
+      // First-time submit — hit the match endpoint.
+      const resp = await fetch(MATCH_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ items:[{
+          partNumber: partVal,
+          description: '',
+          quantity: qtyVal,
+          unitPrice: payVal,
+          discountPercent: discVal,
+        }]}),
+      });
+      if(!resp.ok) throw new Error(`Match failed (${resp.status})`);
+      const data = await resp.json();
+      const r0 = (data.results||[])[0];
+
+      if(!r0 || !r0.matched || !r0.catalog){
+        throw new Error(`No catalog match for "${partVal}". Try the full part number or a different name.`);
+      }
+
+      // Auto-resolve when every candidate has the same MSRP — markup math
+      // is identical regardless of which row we pick. Mirrors runRealScan.
+      let ambiguous = !!r0.ambiguous;
+      if(ambiguous && Array.isArray(r0.matchOptions) && r0.matchOptions.length > 1){
+        const firstPrice = Number(r0.matchOptions[0].price);
+        if(r0.matchOptions.every(o => Number(o.price) === firstPrice)){
+          ambiguous = false;
+        }
+      }
+
+      if(ambiguous){
+        // Stash the match options + the user's typed values, swap the
+        // form into disambig mode. The user picks a row and resubmits.
+        pendingOptions = r0.matchOptions;
+        pendingExtracted = { qty: qtyVal, pay: payVal, disc: discVal };
+        select.innerHTML = pendingOptions.map((o,i)=>{
+          const label = `${o.part || ''} · ${o.desc || ''} ${o.size ? '· '+o.size : ''} ${o.vendor ? '· '+o.vendor : ''} — $${fmt(Number(o.price)||0)}`;
+          return `<option value="${i}">${esc(label)}</option>`;
+        }).join('');
+        disambig.hidden = false;
+        submit.disabled = false;
+        submitLbl.textContent = 'Add selected to invoice';
+        return;
+      }
+
+      const cat = r0.catalog;
+      const msrp = Number(cat.price) || 0;
+      if(msrp <= 0) throw new Error('We found that part, but our catalog has no MSRP for it yet.');
+
+      appendEvidenceItem(cat, { qty: qtyVal, pay: payVal, disc: discVal });
+      close();
+      showToast('Item added');
+    } catch(err) {
+      setError(err.message || 'Could not add that part right now.');
+      submit.disabled = false;
+      submitLbl.textContent = pendingOptions ? 'Add selected to invoice' : 'Add to invoice';
+    }
+  });
+})();
+
+/* Append a new line item to the in-progress evidence list. Pushes the
+   item to activeInvoice.items so recomputeFromInputs() can find its MSRP
+   via data-idx; appends a matching DOM row; refreshes DEMO and totals.
+   `cat` is the catalog row from the match endpoint; `extracted` is what
+   the user typed (qty, pay, disc). */
+function appendEvidenceItem(cat, extracted){
+  const item = {
+    part:     cat.part || '',
+    desc:     cat.desc || cat.part || '',
+    category: cat.catName || cat.category || 'Uncategorized',
+    qty:      Math.max(1, Number(extracted.qty)  || 1),
+    pay:      Math.max(0, Number(extracted.pay)  || 0),
+    disc:     Math.max(0, Math.min(99, Number(extracted.disc) || 0)),
+    msrp:     Number(cat.price) || 0,
+  };
+  activeInvoice.items.push(item);
+  const idx = activeInvoice.items.length - 1;
+
+  // Compute the per-row supplierList up front so the row's right-hand
+  // tag reads correctly even before recomputeFromInputs runs.
+  const supplierList = item.disc < 99 ? item.pay / (1 - item.disc/100) : item.pay;
+
+  const list = $('#extracted-list');
+  const html = `
+    <div class="extracted-item matched" data-idx="${idx}">
+      <span class="ext-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <span class="ext-info">
+        <span class="ext-part">${esc(item.part)}</span>
+        <span class="ext-name">${esc(item.desc)}</span>
+        <span class="ext-msrp">MSRP $${fmt(item.msrp)}/ea</span>
+      </span>
+      <div class="ext-controls">
+        <div class="ext-control">
+          <label class="ext-control-label">Qty</label>
+          <input type="number" class="ext-input ext-qty-in" value="${item.qty}" min="1" step="1" inputmode="numeric" aria-label="Quantity">
+        </div>
+        <div class="ext-control">
+          <label class="ext-control-label">You pay $</label>
+          <input type="number" class="ext-input ext-pay-in" value="${item.pay.toFixed(2)}" min="0" step="0.01" inputmode="decimal" aria-label="What you paid per unit">
+        </div>
+        <div class="ext-control">
+          <label class="ext-control-label">Disc %</label>
+          <input type="number" class="ext-input ext-disc-in" value="${item.disc}" min="0" max="99" step="0.5" inputmode="decimal" aria-label="Stated discount percent">
+        </div>
+      </div>
+      <div class="ext-result">
+        <div class="ext-price-tag">SUPPLIER LIST PRICE</div>
+        <div class="ext-price">$${fmt(supplierList)}</div>
+        <div class="ext-price-sub">you paid $${fmt(item.pay)}/ea</div>
+      </div>
+      <button class="ext-remove" type="button" aria-label="Remove this item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>`;
+  list.insertAdjacentHTML('beforeend', html);
+
+  // Slide the new row in (matches the staggered reveal of the originals).
+  const newRow = list.lastElementChild;
+  void newRow.offsetWidth;
+  newRow.classList.add('show');
+
+  // Update the headline count + the receipt card + DEMO totals.
+  const countEl = $('#evidence-count');
+  if(countEl) countEl.textContent = activeInvoice.items.length;
+  recomputeFromInputs();
+
+  // Rebuild the per-category dropdown (apply-discount menu) so the new
+  // item's category becomes selectable.
+  if(typeof rebuildDiscMenuItems === 'function') rebuildDiscMenuItems();
+
+  // Scroll the new row into view in case the list was long.
+  newRow.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
 
 /* ════════════════════════════════════════════════════════════════
    HEADLINE EXAMPLE CYCLER — keeps the hook alive
@@ -2814,10 +3553,13 @@ async function runEvidence(){
         </div>
       </div>
       <div class="ext-result">
-        <div class="ext-price-tag">SUPPLIER LIST</div>
+        <div class="ext-price-tag">SUPPLIER LIST PRICE</div>
         <div class="ext-price">$${fmt(r.supplierList || 0)}</div>
         <div class="ext-price-sub">you paid $${fmt(r.pay)}/ea</div>
       </div>
+      <button class="ext-remove" type="button" aria-label="Remove this item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
     </div>`).join('');
 
   // Sync the receipt card from the (initial) state
@@ -2839,6 +3581,33 @@ async function runEvidence(){
       void priceEl.offsetWidth;
       priceEl.classList.add('flash');
       setTimeout(()=>priceEl.classList.remove('flash'), 280);
+    });
+    // Remove-item: splice from activeInvoice.items, re-index any rows
+    // after the removed one so data-idx still aligns, animate the row out.
+    list.addEventListener('click', e=>{
+      const btn = e.target.closest('.ext-remove');
+      if(!btn) return;
+      const row = btn.closest('.extracted-item');
+      if(!row) return;
+      const idx = Number(row.dataset.idx);
+      // Guard: keep at least one item so the verdict has something to show.
+      if(activeInvoice.items.length <= 1){
+        showToast('Keep at least one item — use Add to swap');
+        return;
+      }
+      activeInvoice.items.splice(idx, 1);
+      $$('.extracted-item', list).forEach(r => {
+        const i = Number(r.dataset.idx);
+        if(i > idx) r.dataset.idx = String(i - 1);
+      });
+      row.classList.add('removing');
+      setTimeout(()=>{
+        row.remove();
+        const countEl = $('#evidence-count');
+        if(countEl) countEl.textContent = activeInvoice.items.length;
+        recomputeFromInputs();
+        if(typeof rebuildDiscMenuItems === 'function') rebuildDiscMenuItems();
+      }, 250);
     });
   }
 
@@ -2933,7 +3702,7 @@ function rebuildDiscMenuItems(){
       Apply to all items
     </div>
     <div class="disc-apply-sep"></div>
-    <div class="disc-apply-sep-label">By category</div>
+    <div class="disc-apply-sep-label">Apply to category</div>
     ${catEntries.map(([cat,n])=>`
       <div class="disc-apply-cat" data-action="category" data-category="${cat}" role="menuitem" tabindex="0">
         <span>${cat}</span>
@@ -3020,28 +3789,75 @@ async function revealVerdict(){
     vpActual.classList.toggle('is-fair', a >= DEMO.statedDisc);
   }
 
-  // Headline / sign / color — always supplier-inflation = red.
+  // Headline color + label copy track the supplier sentiment:
+  //   markup > 0 → red ("they padded list, here's the inflation $")
+  //   markup < 0 → green ("their list is honest, you're under MSRP $")
+  //   markup ≈ 0 → green ("list matches MSRP exactly — fine")
   const isInflated = DEMO.markup > 0;
-  $('.verdict-label').textContent = isInflated
-    ? 'Supplier marked up MSRP by'
-    : 'Supplier list matches MSRP';
+  $('.verdict-label').textContent =
+    isInflated         ? 'Supplier marked up MSRP by' :
+    DEMO.markup < 0    ? 'Supplier list price is below MSRP by' :
+                         'Supplier list price matches MSRP';
   $('.vh-sign').textContent = '$';
   const headline = $('.verdict-headline');
-  headline.style.color = 'var(--inflation)';
-  headline.style.textShadow = '0 0 80px var(--inflation-glow)';
+  headline.style.color      = isInflated ? 'var(--inflation)'              : 'var(--truth)';
+  headline.style.textShadow = isInflated ? '0 0 80px var(--inflation-glow)' : '0 0 80px var(--truth-glow)';
 
-  // Stamp — always "+X% OVER MSRP / PADDED LIST"
+  // Stamp — content + color depends on whether supplier padded list.
+  //   markup > 0  → red "+X% OVER MSRP / PADDED LIST" (the bad-supplier story)
+  //   markup ≤ 0  → green "−X% UNDER MSRP / FAIR LIST" (supplier's list is
+  //                 honest; nothing to expose, frame it positively)
   const stamp = $('#verdict-stamp');
-  stamp.querySelector('.vs-pct').textContent = '+' + Math.abs(DEMO.markupPct).toFixed(0) + '%';
-  stamp.querySelector('.vs-top').textContent = 'OVER MSRP';
-  stamp.querySelector('.vs-bottom').textContent = 'PADDED LIST';
-  stamp.style.color = 'var(--inflation)';
+  stamp.style.display = '';
+  if (DEMO.markup > 0) {
+    stamp.querySelector('.vs-pct').textContent = '+' + Math.abs(DEMO.markupPct).toFixed(0) + '%';
+    stamp.querySelector('.vs-top').textContent = 'OVER MSRP';
+    stamp.querySelector('.vs-bottom').textContent = 'PADDED LIST';
+    stamp.style.color = 'var(--inflation)';
+  } else {
+    stamp.querySelector('.vs-pct').textContent = (DEMO.markup < 0 ? '−' : '') + Math.abs(DEMO.markupPct).toFixed(0) + '%';
+    stamp.querySelector('.vs-top').textContent = DEMO.markup < 0 ? 'UNDER MSRP' : 'AT MSRP';
+    stamp.querySelector('.vs-bottom').textContent = 'FAIR LIST';
+    stamp.style.color = 'var(--truth)';
+  }
   stamp.style.borderColor = 'currentColor';
+  // Background + inner ring follow the sentiment too. Color is already
+  // routed via currentColor, but background and the ::before ring are
+  // CSS-hardcoded to inflation tokens — flip them with a class.
+  stamp.classList.toggle('is-fair', DEMO.markup <= 0);
 
-  // Annual savings pill (next to the verdict): supplier markup × reorder cadence.
+  // Annual savings pill — math AND copy depend on the same branch.
+  //   markup > 0  → "in annual savings"  (potential — what you'd recover by
+  //                 cutting this supplier)        = markup × cadence
+  //   markup ≤ 0  → "you're already saving … vs MSRP"  (realized — what
+  //                 they're saving by not paying full MSRP today)
+  //                                               = (MSRP − paid) × cadence
   const vaCad = $('#va-cadence');
   const cadMult = Number(vaCad?.dataset.mult) || 12;
-  retarget('#va-annual', Math.max(0, DEMO.markup) * cadMult, 0);
+  const isMarkup = DEMO.markup > 0;
+  const savingsBase = isMarkup ? DEMO.markup : Math.max(0, DEMO.msrp - DEMO.paid);
+  retarget('#va-annual', savingsBase * cadMult, 0);
+  // Persist the per-order savings figure so the cadence cycler below can
+  // re-tween against the right base. Without this, switching cadence on an
+  // under-MSRP verdict floors to 0 (DEMO.markup is negative in that branch).
+  const vaNum = $('#va-annual');
+  if(vaNum) vaNum.dataset.base = String(savingsBase);
+
+  const vaMid    = $('#va-mid');
+  const vaSuffix = $('#va-suffix');
+  if (vaMid)    vaMid.textContent       = isMarkup ? "cadence, that's" : "cadence, you're already saving";
+  if (vaSuffix) vaSuffix.innerHTML      = isMarkup ? 'in <strong>annual savings</strong>.' : 'vs full <strong>MSRP</strong>.';
+  // Color the pill to match the sentiment: red when the figure is recoverable
+  // markup (the bad-supplier story), green when it's already-realized savings.
+  $('#verdict-annual').classList.toggle('is-fair', !isMarkup);
+  // Same flip for the "Verdict in" eyebrow at the top of the stage so the
+  // first thing the user sees doesn't telegraph "bad news" when the verdict
+  // is positive. Swaps the warning triangle for a check via CSS.
+  $('.verdict-eyebrow')?.classList.toggle('is-fair', !isMarkup);
+  // Stage-level flip — lets descendant CSS rules (THEIR LIST text, supplier
+  // list bar fill + value) flip from inflation red to truth green when the
+  // supplier's list is honest. Single toggle, multiple downstream rules.
+  $('#stage-verdict').classList.toggle('is-fair', !isMarkup);
 
   // Now run the show
   const verdict = $('#stage-verdict');
@@ -3061,7 +3877,7 @@ async function revealVerdict(){
   if(vpActual) tween(vpActual, Number(vpActual.dataset.target));
   const headlineDur = Number($('#verdict-num').dataset.duration) || 2200;
 
-  // Beat 2: stamp drop with dust particles — fires once the count-up settles
+  // Beat 2: stamp drop with dust particles — fires once the count-up settles.
   await sleep(headlineDur + 220);
   stamp.classList.add('dropped');
   emitDust(stamp, 14);
@@ -3171,8 +3987,14 @@ async function runProof(){
   $('#lf-list').textContent = '$'+fmt(DEMO.listSum);
   $('#lf-paid').textContent = '$'+fmt(DEMO.paid);
   $('#lf-msrp').textContent = '$'+fmt(DEMO.msrp);
-  // Markup total — plain text in red, same shape as the other total cells
-  $('#lf-markup').textContent = '+$' + fmt(DEMO.markup);
+  // Markup total — sign and color follow the sentiment:
+  //   > 0 → "+$X" red (the bad-supplier story)
+  //   < 0 → "−$X" green (savings — supplier list under MSRP)
+  //   = 0 → "$0" neutral
+  const lfMarkup = $('#lf-markup');
+  const totalSign = DEMO.markup > 0 ? '+' : DEMO.markup < 0 ? '−' : '';
+  lfMarkup.textContent = totalSign + '$' + fmt(Math.abs(DEMO.markup));
+  lfMarkup.classList.toggle('fair', DEMO.markup <= 0);
 
   await sleep(40);
   // Reveal rows in stagger
@@ -3190,8 +4012,8 @@ async function runProof(){
 const CADENCES = [
   {label:'monthly',   mult:12},
   {label:'quarterly', mult:4},
-  {label:'weekly',    mult:52},
   {label:'yearly',    mult:1},
+  {label:'weekly',    mult:52},
 ];
 $('#va-cadence').addEventListener('click', e=>{
   e.preventDefault();
@@ -3203,8 +4025,13 @@ $('#va-cadence').addEventListener('click', e=>{
   va.dataset.mult = String(next.mult);
   const el = $('#va-annual');
   if(el){
+    // Read the per-order savings base set by revealVerdict() — already
+    // sentiment-aware (DEMO.markup for inflated, DEMO.msrp - DEMO.paid for
+    // under-MSRP). Falls back to DEMO.markup if revealVerdict hasn't run yet.
+    const base = Number(el.dataset.base);
+    const safe = Number.isFinite(base) ? base : Math.max(0, DEMO.markup);
     el.dataset.tweened = '1';
-    tween(el, Math.max(0, DEMO.markup) * next.mult, {duration:700, decimals:0});
+    tween(el, safe * next.mult, {duration:700, decimals:0});
   }
 });
 
@@ -3228,14 +4055,27 @@ async function runResolution(){
   const annual = padAmt * cadMult;
   const stated = DEMO.statedDisc;
 
-  if(t1){
-    t1.innerHTML = `"Your supplier inflated their list price by ~<em>${padPct.toFixed(0)}%</em> over MSRP so they could give you a generous-looking <strong>${stated.toFixed(0)}% discount</strong>."`;
-  }
-  if(t2){
-    t2.innerHTML = `Their list adds up to <strong>$${fmt(DEMO.listSum)}</strong>, but the manufacturer's MSRP for the same items is <strong>$${fmt(DEMO.msrp)}</strong> — that's <em>$${fmt(padAmt)}</em> of pure padding baked into how they "discount" you.`;
-  }
-  if(t3){
-    t3.innerHTML = `If your reorder cadence is <strong>${cadLabel}</strong>, that padded list compounds to roughly <em>$${fmtInt(annual)} a year</em> across this supplier on ${itemsCount} part number${itemsCount===1?'':'s'} alone.`;
+  // Translation copy must follow the same sentiment branch as the verdict
+  // headline — otherwise "your supplier inflated their list" plays under a
+  // green "supplier list is below MSRP" verdict, and the user is whiplashed.
+  if(DEMO.markup > 0){
+    // Inflated supplier list — the original "padded discount" framing.
+    if(t1) t1.innerHTML = `"Your supplier inflated their list price by ~<em>${padPct.toFixed(0)}%</em> over MSRP so they could give you a generous-looking <strong>${stated.toFixed(0)}% discount</strong>."`;
+    if(t2) t2.innerHTML = `Their list price adds up to <strong>$${fmt(DEMO.listSum)}</strong>, but the manufacturer's MSRP for the same items is <strong>$${fmt(DEMO.msrp)}</strong> — that's <em>$${fmt(padAmt)}</em> of pure padding baked into how they "discount" you.`;
+    if(t3) t3.innerHTML = `If your reorder cadence is <strong>${cadLabel}</strong>, that padded list compounds to roughly <em>$${fmtInt(annual)} a year</em> across this supplier on ${itemsCount} part number${itemsCount===1?'':'s'} alone.`;
+  } else if(DEMO.markup < 0){
+    // Under-MSRP — supplier's list is honest. Reframe as already-realized
+    // savings the user is keeping vs. paying full manufacturer price.
+    const realDisc = Math.abs(DEMO.actualDisc);
+    const annualSavings = Math.max(0, DEMO.msrp - DEMO.paid) * cadMult;
+    if(t1) t1.innerHTML = `"No padding here — their list price is already ~<em>${padPct.toFixed(0)}%</em> below MSRP. With your stated <strong>${stated.toFixed(0)}% discount</strong>, you're paying <em>${realDisc.toFixed(0)}%</em> under the manufacturer's price."`;
+    if(t2) t2.innerHTML = `Their list price adds up to <strong>$${fmt(DEMO.listSum)}</strong>, about <em>$${fmt(padAmt)}</em> below the manufacturer's MSRP of <strong>$${fmt(DEMO.msrp)}</strong>. No fake-discount math — what they quote is what they discount from.`;
+    if(t3) t3.innerHTML = `At <strong>${cadLabel}</strong> cadence, that puts you ahead by roughly <em>$${fmtInt(annualSavings)} a year</em> vs full MSRP across this supplier on ${itemsCount} part number${itemsCount===1?'':'s'} alone.`;
+  } else {
+    // Exact match — rare floating-point edge case. Neutral copy.
+    if(t1) t1.innerHTML = `"Their list price matches MSRP exactly. Your stated <strong>${stated.toFixed(0)}% discount</strong> is your real discount — no math games on this one."`;
+    if(t2) t2.innerHTML = `Their list price and the manufacturer's MSRP both come to <strong>$${fmt(DEMO.msrp)}</strong>. No padding, no hidden uplift.`;
+    if(t3) t3.innerHTML = `Nothing to recover here — the supplier is playing it straight on these ${itemsCount} part number${itemsCount===1?'':'s'}.`;
   }
 
   bindReveals(stage);
@@ -3246,7 +4086,7 @@ async function runResolution(){
    before handing it over (no-op when the user has already been captured). */
 $('#action-save').addEventListener('click', ()=>{
   window.requireEmail('export', ()=>{
-    const headers = ['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list ($/ea, derived)','Line you paid ($)','Line MSRP ($)','Line markup ($)'];
+    const headers = ['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list price ($/ea, derived)','Line you paid ($)','Line MSRP ($)','Line markup ($)'];
     const lines = DEMO.rows.map(r=>[
       r.part,
       `"${(r.desc||'').replace(/"/g,'""')}"`,
@@ -3294,6 +4134,11 @@ $('#action-rescan').addEventListener('click', ()=>{
   $('#markup-bars').classList.remove('show', 'is-under');
   $('#verdict-annual').classList.remove('show');
   $$('.num-tween').forEach(el=>{ el.dataset.tweened=''; el.dataset.from=0; });
+  // Clear spot-check inputs so a follow-up check starts fresh.
+  const hPart = $('#hsc-part'); if(hPart) hPart.value = '';
+  const hPay  = $('#hsc-pay');  if(hPay)  hPay.value  = '';
+  const hDisc = $('#hsc-disc'); if(hDisc) hDisc.value = '';
+  const hErr  = $('#hsc-error');if(hErr)  hErr.hidden = true;
   window.scrollTo({top:0, behavior:'smooth'});
 });
 
