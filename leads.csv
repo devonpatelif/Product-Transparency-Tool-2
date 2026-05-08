@@ -4,3 +4,9 @@ timestamp,email,trigger,ip,user_agent
 2026-04-30T15:44:01+00:00,'+leadingPlus@example.com,'-evil,127.0.0.1,"'=cmd|'/c calc'!A0"
 timestamp,email,phone,trigger,ip,user_agent
 2026-05-03T21:53:14+00:00,d.patel@industrialfinishes.com,,scan,127.0.0.1,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"
+timestamp,email,phone,trigger,ip,user_agent
+2026-05-07T17:24:07+00:00,d.patel@industrialfinishes.com,,scan,127.0.0.1,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"
+timestamp,email,phone,trigger,ip,user_agent
+2026-05-07T17:35:45+00:00,,5419159753,audit,127.0.0.1,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"
+timestamp,email,phone,trigger,ip,user_agent
+2026-05-07T17:39:51+00:00,d.patel@industrialfinishes.com,,audit,127.0.0.1,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"

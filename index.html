@@ -142,6 +142,18 @@ button,input,textarea,select{font:inherit;color:inherit}
   background:radial-gradient(circle,rgba(10,131,68,.22) 0%,rgba(10,131,68,.08) 35%,transparent 65%);
   mix-blend-mode:multiply;
 }
+
+/* Italic grey accents (Instrument Serif phrases, faint spans) read too
+   washed out on the cream light-mode background. Bump them to a darker
+   tone for legibility — only in light mode; dark mode already has plenty
+   of contrast against #070912. */
+[data-theme="light"] .headline .h-faint,
+[data-theme="light"] .es-title em,
+[data-theme="light"] .evidence-title em,
+[data-theme="light"] .proof-title em,
+[data-theme="light"] .mb-label-sub{
+  color:rgba(15,20,30,.62);
+}
 @media(hover:hover){#cursor-light.active{opacity:1}}
 
 /* ════════════════════════════════════════════════════════════════
@@ -185,14 +197,6 @@ button,input,textarea,select{font:inherit;color:inherit}
 .brand:hover .brand-mark::after{animation:shineSweep .8s var(--ease-out) forwards}
 @keyframes shineSweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 .brand-mark svg{width:16px;height:16px;color:var(--bg);position:relative;z-index:1}
-
-.topnav{display:flex;gap:6px;align-items:center}
-.topnav a{
-  padding:8px 14px;font-size:13px;font-weight:500;color:var(--text-2);text-decoration:none;border-radius:8px;
-  transition:color .2s,background .2s;position:relative;
-}
-.topnav a:hover{color:var(--text);background:var(--surface)}
-@media(max-width:760px){.topnav{display:none}}
 
 .topbar-right{display:flex;align-items:center;gap:8px}
 .theme-toggle{
@@ -612,25 +616,25 @@ body.in-flow .topbar{display:none}
 .scan-paper-row .pr-cell:nth-child(3){flex:.3;opacity:.5}
 .scan-paper-row .pr-cell:nth-child(4){flex:.4;opacity:.85}
 
-/* The sweep beam */
+/* The sweep beam — opaque green stripe with a sharp center line.
+   Explicit z-index ensures it paints above scan-paper-content. */
 .scan-beam{
   position:absolute;left:0;right:0;height:80px;
   background:linear-gradient(to bottom,
-    transparent 0%,
-    rgba(168,255,96,.05) 30%,
-    rgba(168,255,96,.45) 50%,
-    rgba(168,255,96,.05) 70%,
-    transparent 100%);
-  filter:blur(.5px);
+    rgba(94,228,144,0) 0%,
+    rgba(94,228,144,.3) 30%,
+    rgba(94,228,144,.9) 50%,
+    rgba(94,228,144,.3) 70%,
+    rgba(94,228,144,0) 100%);
   animation:scanSweep 2.4s var(--ease-out) infinite;
   pointer-events:none;
-  mix-blend-mode:screen;
+  z-index:3;
   top:-80px;
 }
 .scan-beam::before{
-  content:'';position:absolute;left:0;right:0;top:50%;height:2px;
-  background:var(--truth);
-  box-shadow:0 0 20px var(--truth-glow),0 0 40px var(--truth-glow);
+  content:'';position:absolute;left:0;right:0;top:50%;height:3px;
+  background:#5ee490;
+  box-shadow:0 0 24px #5ee490,0 0 48px rgba(94,228,144,.6);
 }
 @keyframes scanSweep{
   0%{top:-80px}
@@ -1183,7 +1187,7 @@ body.in-flow .topbar{display:none}
 .mb-label-tag-good{background:var(--truth-soft);color:var(--truth)}
 
 /* ─── STAGE D: THE PROOF / LEDGER ──────────────────────────── */
-.stage-proof{padding-top:120px}
+.stage-proof{padding-top:120px;padding-bottom:24px}
 .proof-header{display:flex;justify-content:space-between;align-items:end;gap:32px;margin-bottom:32px;flex-wrap:wrap}
 .proof-titlewrap{flex:1;min-width:280px}
 .proof-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
@@ -1261,7 +1265,7 @@ body.in-flow .topbar{display:none}
 }
 
 /* ─── ACT 4: RESOLUTION ─────────────────────────────────────── */
-.stage-resolution{padding-top:120px;padding-bottom:120px}
+.stage-resolution{padding-top:16px;padding-bottom:120px}
 
 .translation{
   max-width:760px;margin:0 auto;
@@ -1394,6 +1398,73 @@ body.in-flow .topbar{display:none}
 .footer-meta a:hover{color:var(--text)}
 
 /* ════════════════════════════════════════════════════════════════
+   LEAD GATE MODAL
+   ════════════════════════════════════════════════════════════════ */
+.gate{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.gate[data-open="1"]{display:flex}
+.gate-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:gateFade .25s var(--ease-out)}
+[data-theme="light"] .gate-backdrop{background:rgba(15,20,30,.45)}
+.gate-card{
+  position:relative;width:min(460px,100%);
+  background:var(--bg-elev);border:1px solid var(--border-strong);
+  border-radius:var(--r-lg);
+  padding:36px 32px 28px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+  animation:gatePop .35s var(--ease-spring);
+}
+@keyframes gateFade{from{opacity:0}to{opacity:1}}
+@keyframes gatePop{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.gate-close{
+  position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;
+  background:transparent;border:none;color:var(--text-3);cursor:pointer;
+  display:grid;place-items:center;transition:all .2s ease;
+}
+.gate-close:hover{color:var(--text);background:var(--surface)}
+.gate-close svg{width:16px;height:16px}
+.gate-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:5px 12px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-2);margin-bottom:16px;
+}
+.gate-title{
+  font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;
+  line-height:1.15;letter-spacing:-.02em;color:var(--text);margin-bottom:10px;
+}
+.gate-sub{font-size:14px;color:var(--text-2);line-height:1.5;margin-bottom:22px}
+.gate-tabs{
+  display:inline-flex;gap:0;padding:4px;
+  background:var(--surface);border-radius:999px;margin-bottom:14px;
+}
+.gate-tab{
+  padding:7px 18px;border-radius:999px;background:transparent;border:none;cursor:pointer;
+  font-size:12px;font-weight:600;color:var(--text-2);
+  transition:all .2s var(--ease-out);
+}
+.gate-tab.active{background:var(--text);color:var(--bg)}
+.gate-form{display:flex;gap:8px}
+@media(max-width:480px){.gate-form{flex-direction:column}}
+.gate-input{
+  flex:1;padding:13px 16px;border-radius:var(--r);
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  font-size:14px;outline:none;transition:all .2s ease;
+}
+.gate-input:focus{border-color:var(--truth);background:var(--surface-2);box-shadow:0 0 0 3px var(--truth-soft)}
+.gate-submit{
+  padding:13px 22px;border-radius:var(--r);
+  background:var(--text);color:var(--bg);border:none;cursor:pointer;
+  font-size:14px;font-weight:700;letter-spacing:-.005em;
+  transition:all .25s var(--ease-out);position:relative;overflow:hidden;white-space:nowrap;
+}
+.gate-submit::before{content:'';position:absolute;inset:0;background:var(--truth);transform:translateY(101%);transition:transform .3s var(--ease-out)}
+.gate-submit > *{position:relative;z-index:1}
+.gate-submit:hover::before{transform:translateY(0)}
+.gate-submit:disabled{opacity:.6;cursor:wait}
+.gate-error{margin-top:12px;font-size:13px;color:var(--inflation);font-weight:500}
+.gate-fineprint{margin-top:14px;font-size:11px;color:var(--text-3);line-height:1.5}
+
+/* ════════════════════════════════════════════════════════════════
    TOAST
    ════════════════════════════════════════════════════════════════ */
 .toast{
@@ -1441,11 +1512,6 @@ body.in-flow .topbar{display:none}
     </span>
     <span>Industrial Finishes</span>
   </a>
-  <nav class="topnav" aria-label="Primary">
-    <a href="#how">How it works</a>
-    <a href="#examples">Examples</a>
-    <a href="https://industrialfinishes.com" target="_blank" rel="noopener">About</a>
-  </nav>
   <div class="topbar-right">
     <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -1470,7 +1536,7 @@ body.in-flow .topbar{display:none}
 
   <h1 class="headline">
     <span class="h-line">Your supplier says <span class="num-token num-stated"><span class="num-tween" id="hl-stated" data-target="40">40</span>% off</span>.</span>
-    <span class="h-line"><span class="h-faint">Most of the time, it's really</span> <span class="num-token num-actual"><span class="num-tween" id="hl-actual" data-target="12">12</span>%</span>.</span>
+    <span class="h-line"><span class="h-faint">Run the math &mdash; it's really</span> <span class="num-token num-actual"><span class="num-tween" id="hl-actual" data-target="12">12</span>%</span>.</span>
   </h1>
 
   <p class="lede">Drop in any quote or invoice. We compare every line item against manufacturer&nbsp;MSRP and show you exactly where the markup is hiding — line by line, dollar by dollar.</p>
@@ -1510,7 +1576,7 @@ body.in-flow .topbar{display:none}
 <!-- ═══════════════ EXAMPLE STRIP ═══════════════ -->
 <section class="example-strip" id="examples">
   <div class="es-eyebrow reveal">From real invoices we've audited</div>
-  <h2 class="es-title reveal">The same SKU, different stories. <em>Markup hides in plain sight.</em></h2>
+  <h2 class="es-title reveal">The same part number, different stories. <em>Markup hides in plain sight.</em></h2>
   <div class="es-grid">
     <div class="es-card reveal">
       <div class="es-supplier">Distributor A</div>
@@ -1527,25 +1593,25 @@ body.in-flow .topbar{display:none}
     <div class="es-card reveal">
       <div class="es-supplier">Distributor B</div>
       <div class="es-row"><span class="es-row-label">Their list</span><span class="es-row-val">$1,450.00</span></div>
-      <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">35% off</span></div>
-      <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$942.50</span></div>
+      <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">30% off</span></div>
+      <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$1,015.00</span></div>
       <div class="es-divider"></div>
-      <div class="es-row"><span class="es-row-label">Manufacturer MSRP</span><span class="es-row-val" style="color:var(--truth)">$798.00</span></div>
+      <div class="es-row"><span class="es-row-label">Manufacturer MSRP</span><span class="es-row-val" style="color:var(--truth)">$1,103.00</span></div>
       <div class="es-bottom">
         <span class="es-bottom-label">Actual discount</span>
-        <span class="es-bottom-val">−18.1%</span>
+        <span class="es-bottom-val">8.0%</span>
       </div>
     </div>
     <div class="es-card reveal">
       <div class="es-supplier">Distributor C</div>
       <div class="es-row"><span class="es-row-label">Their list</span><span class="es-row-val">$245.00</span></div>
-      <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">35% off</span></div>
-      <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$159.25</span></div>
+      <div class="es-row"><span class="es-row-label">Stated discount</span><span class="es-row-val stated">40% off</span></div>
+      <div class="es-row"><span class="es-row-label">You pay</span><span class="es-row-val">$147.00</span></div>
       <div class="es-divider"></div>
-      <div class="es-row"><span class="es-row-label">Manufacturer MSRP</span><span class="es-row-val" style="color:var(--truth)">$142.75</span></div>
+      <div class="es-row"><span class="es-row-label">Manufacturer MSRP</span><span class="es-row-val" style="color:var(--truth)">$188.00</span></div>
       <div class="es-bottom">
         <span class="es-bottom-label">Actual discount</span>
-        <span class="es-bottom-val">−11.6%</span>
+        <span class="es-bottom-val">21.8%</span>
       </div>
     </div>
   </div>
@@ -1687,7 +1753,7 @@ body.in-flow .topbar{display:none}
 
     <div class="verdict-pair">
       <div class="vp-cell">
-        <div class="vp-label">Stated vs actual</div>
+        <div class="vp-label">Stated vs actual discount</div>
         <div class="vp-val disc-pair">
           <span class="vp-disc-stated"><span id="vp-stated-pct">35</span>%</span>
           <span class="vp-disc-arrow">→</span>
@@ -1714,7 +1780,7 @@ body.in-flow .topbar{display:none}
     </div>
 
     <div class="markup-bars" id="markup-bars">
-      <div class="mb-eyebrow">Price breakdown · same SKUs, three numbers</div>
+      <div class="mb-eyebrow">Price breakdown · same part numbers, three numbers</div>
 
       <div class="mb-row">
         <div class="mb-label">
@@ -1825,7 +1891,7 @@ body.in-flow .topbar{display:none}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </div>
         <div class="next-title">Audit your last 90 days</div>
-        <div class="next-desc">Send us your last quarter of invoices and we'll quantify the total leak across every distributor and SKU.</div>
+        <div class="next-desc">Send us your last quarter of invoices and we'll quantify the total leak across every distributor and part number.</div>
         <span class="next-arrow">Start full audit <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </button>
       <button class="next-card reveal" id="action-rescan" type="button">
@@ -1852,7 +1918,7 @@ body.in-flow .topbar{display:none}
       </form>
       <div class="cf-success" id="cf-success">
         <div class="cf-success-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div>Got it &mdash; a sales rep will reach out shortly.</div>
+        <div>Got it &mdash; a sales rep will reach out as soon as possible.</div>
       </div>
     </div>
   </section>
@@ -1871,6 +1937,32 @@ body.in-flow .topbar{display:none}
     <a href="https://industrialfinishes.com" target="_blank" rel="noopener">industrialfinishes.com</a>
   </div>
 </footer>
+
+<!-- ═══════════════ LEAD GATE MODAL ═══════════════ -->
+<!-- Hard gate before high-value actions (real upload, CSV export). Captured
+     value is POSTed to api-email.php and persisted in localStorage so the
+     gate never re-prompts on the same browser. -->
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate-backdrop" id="gate-backdrop"></div>
+  <div class="gate-card">
+    <button class="gate-close" id="gate-close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="gate-eyebrow"><span class="eyebrow-dot"></span>One quick step</div>
+    <h3 class="gate-title" id="gate-title">Reveal your full markup.</h3>
+    <p class="gate-sub" id="gate-sub">See every dollar of inflation on your invoice — line by line, supplier list versus manufacturer MSRP.</p>
+    <div class="gate-tabs" role="tablist" aria-label="Contact method">
+      <button class="gate-tab active" data-mode="email" role="tab" aria-selected="true" type="button">Email</button>
+      <button class="gate-tab" data-mode="phone" role="tab" aria-selected="false" type="button">Phone</button>
+    </div>
+    <form class="gate-form" id="gate-form" novalidate>
+      <input type="email" class="gate-input" id="gate-input" placeholder="you@yourshop.com" autocomplete="email" inputmode="email" required>
+      <button type="submit" class="gate-submit" id="gate-submit"><span>Continue</span></button>
+    </form>
+    <div class="gate-error" id="gate-error" hidden></div>
+    <p class="gate-fineprint">No spam. We may follow up with pricing on the part numbers you scanned.</p>
+  </div>
+</div>
 
 <!-- ═══════════════ TOAST ═══════════════ -->
 <div class="toast" id="toast" role="status" aria-live="polite">
@@ -2061,6 +2153,150 @@ function showToast(msg){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   LEAD GATE — captures email/phone before high-value actions and
+   POSTs to api-email.php. Persisted in localStorage so the gate
+   never re-prompts after the first capture on a given browser.
+   ════════════════════════════════════════════════════════════════ */
+const LEAD_KEY = 'ifs_lead';
+
+// Copy is framed as the user UNLOCKING content they already get on-screen,
+// not us promising a deliverable. Keeps the gate honest — there's nothing
+// we have to send by email if a captured lead never gets a follow-up.
+const GATE_COPY = {
+  scan:    { title:'Reveal your full markup.',           sub:"See every dollar of inflation on your invoice — line by line, supplier list versus manufacturer MSRP." },
+  export:  { title:'Save your markup report.',           sub:"Yours to keep — every line, every dollar, ready for the next supplier conversation." },
+  audit:   { title:'See your real numbers.',             sub:"Get the full breakdown of where your supplier's discount is fake — every part number, every line." },
+  default: { title:'Unlock your full markup analysis.',  sub:"See exactly where the inflation is hiding." },
+};
+
+function leadCaptured(){
+  try { return !!JSON.parse(localStorage.getItem(LEAD_KEY) || 'null'); }
+  catch { return false; }
+}
+function rememberLead(payload){
+  try { localStorage.setItem(LEAD_KEY, JSON.stringify({ ...payload, ts: Date.now() })); }
+  catch { /* private mode / quota — silently no-op */ }
+}
+
+async function submitLead({ email, phone, trigger }){
+  const fd = new FormData();
+  if(email)   fd.append('email', email);
+  if(phone)   fd.append('phone', phone);
+  if(trigger) fd.append('trigger', trigger);
+  const resp = await fetch('api-email.php', { method:'POST', body: fd, keepalive: true });
+  if(!resp.ok){
+    let msg = 'Could not send — please try again.';
+    try { const j = await resp.json(); if(j && j.error) msg = j.error; } catch {}
+    throw new Error(msg);
+  }
+  return true;
+}
+
+(function leadGate(){
+  const gate     = $('#gate');
+  if(!gate) return;
+  const backdrop = $('#gate-backdrop');
+  const closeBtn = $('#gate-close');
+  const titleEl  = $('#gate-title');
+  const subEl    = $('#gate-sub');
+  const tabs     = $$('.gate-tab');
+  const form     = $('#gate-form');
+  const input    = $('#gate-input');
+  const submitBtn= $('#gate-submit');
+  const errEl    = $('#gate-error');
+
+  let pending = null;       // {trigger, onSuccess}
+  let lastFocused = null;
+
+  function setMode(mode){
+    tabs.forEach(t=>{
+      const on = t.dataset.mode === mode;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on);
+    });
+    if(mode === 'phone'){
+      input.type='tel';   input.placeholder='(555) 123-4567';   input.inputMode='tel';   input.autocomplete='tel';
+    } else {
+      input.type='email'; input.placeholder='you@yourshop.com'; input.inputMode='email'; input.autocomplete='email';
+    }
+    input.value = '';
+    setError('');
+  }
+  function setError(msg){
+    if(msg){ errEl.textContent = msg; errEl.hidden = false; }
+    else   { errEl.textContent = '';  errEl.hidden = true;  }
+  }
+  function open(trigger, onSuccess){
+    pending = { trigger, onSuccess };
+    const copy = GATE_COPY[trigger] || GATE_COPY.default;
+    titleEl.textContent = copy.title;
+    subEl.textContent   = copy.sub;
+    setMode('email');
+    setError('');
+    lastFocused = document.activeElement;
+    gate.hidden = false;
+    gate.dataset.open = '1';
+    setTimeout(()=>input.focus(), 80);
+  }
+  function close(){
+    gate.dataset.open = '';
+    gate.hidden = true;
+    pending = null;
+    if(lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  tabs.forEach(t=>t.addEventListener('click', ()=>setMode(t.dataset.mode)));
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', e=>{
+    if(!pending) return;
+    if(e.key==='Escape'){ e.preventDefault(); close(); }
+  });
+
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    if(!pending) return;
+    const v = input.value.trim();
+    const isPhone = input.type === 'tel';
+    if(!v){ setError(isPhone ? 'Phone number required.' : 'Email required.'); return; }
+    if(!isPhone && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){
+      setError("That email doesn't look right."); return;
+    }
+    if(isPhone && v.replace(/\D+/g,'').length < 10){
+      setError('Phone needs at least 10 digits.'); return;
+    }
+
+    submitBtn.disabled = true;
+    const submitLabel = submitBtn.querySelector('span');
+    submitLabel.textContent = 'Unlocking…';
+    try {
+      const payload = isPhone ? { phone:v, trigger:pending.trigger } : { email:v, trigger:pending.trigger };
+      await submitLead(payload);
+      rememberLead(payload);
+      const cb = pending.onSuccess;
+      close();
+      submitBtn.disabled = false;
+      submitLabel.textContent = 'Continue';
+      if(typeof cb === 'function') cb();
+    } catch(err) {
+      setError(err.message || 'Could not send — please try again.');
+      submitBtn.disabled = false;
+      submitLabel.textContent = 'Continue';
+    }
+  });
+
+  // Public API: gate an action behind email capture. If already captured,
+  // run onSuccess immediately; otherwise open the modal.
+  window.requireEmail = function(trigger, onSuccess){
+    if(leadCaptured()){
+      if(typeof onSuccess === 'function') onSuccess();
+      return;
+    }
+    open(trigger, onSuccess);
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════════
    THEME TOGGLE
    ════════════════════════════════════════════════════════════════ */
 (function themeToggle(){
@@ -2111,13 +2347,20 @@ function showToast(msg){
   ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{
     e.preventDefault(); dz.classList.remove('dragging');
   }));
+  // Gate real uploads behind email capture. Each Vision-API call costs
+  // money and the upload is one of the highest-intent moments in the
+  // funnel, so we collect contact info first. The demo path (#try-demo)
+  // stays ungated — it's a no-cost taste of the product.
   dz.addEventListener('drop', e=>{
     const f = e.dataTransfer?.files?.[0];
-    if(f){ launchFlow(f); }
+    if(f){ window.requireEmail('scan', ()=>launchFlow(f)); }
   });
   input.addEventListener('change', e=>{
     const f = e.target.files?.[0];
-    if(f){ launchFlow(f); }
+    if(!f) return;
+    window.requireEmail('scan', ()=>launchFlow(f));
+    // Reset so re-selecting the same file after a dismissed gate still fires change
+    e.target.value = '';
   });
   // Keyboard a11y — Enter/Space on label triggers click
   dz.addEventListener('keydown', e=>{
@@ -2756,13 +2999,24 @@ async function revealVerdict(){
   // Actual = positive when customer got a real discount under MSRP, negative
   // when they paid over MSRP. Color: red if supplier "shorted" you (actual <
   // stated, almost always the case), green if they delivered or better.
+  // Values are pre-staged at 0 and tweened in sync with the headline beat
+  // (see Beat 1 below). Sign prefix is data-driven, so we can't use the
+  // declarative .num-tween path — tween() is invoked imperatively.
   const vpStated = $('#vp-stated-pct');
-  if(vpStated) vpStated.textContent = DEMO.statedDisc.toFixed(0);
+  if(vpStated){
+    vpStated.dataset.target = String(DEMO.statedDisc);
+    vpStated.dataset.from   = '0';
+    vpStated.textContent    = '0';
+  }
   const vpActual = $('#vp-disc-actual');
   if(vpActual){
-    const a    = DEMO.actualDisc;
-    const sign = a < 0 ? '−' : '';
-    vpActual.textContent = sign + Math.abs(a).toFixed(1) + '%';
+    const a = DEMO.actualDisc;
+    vpActual.dataset.target   = Math.abs(a).toFixed(1);
+    vpActual.dataset.from     = '0';
+    vpActual.dataset.prefix   = a < 0 ? '−' : '';
+    vpActual.dataset.suffix   = '%';
+    vpActual.dataset.decimals = '1';
+    vpActual.textContent      = '0%';
     vpActual.classList.toggle('is-fair', a >= DEMO.statedDisc);
   }
 
@@ -2803,6 +3057,8 @@ async function revealVerdict(){
   // so the dramatic moment lands AFTER the dollar amount has fully resolved.
   await sleep(700);
   tweenAll(verdict);
+  if(vpStated) tween(vpStated, Number(vpStated.dataset.target), {decimals: 0});
+  if(vpActual) tween(vpActual, Number(vpActual.dataset.target));
   const headlineDur = Number($('#verdict-num').dataset.duration) || 2200;
 
   // Beat 2: stamp drop with dust particles — fires once the count-up settles
@@ -2979,35 +3235,39 @@ async function runResolution(){
     t2.innerHTML = `Their list adds up to <strong>$${fmt(DEMO.listSum)}</strong>, but the manufacturer's MSRP for the same items is <strong>$${fmt(DEMO.msrp)}</strong> — that's <em>$${fmt(padAmt)}</em> of pure padding baked into how they "discount" you.`;
   }
   if(t3){
-    t3.innerHTML = `If your reorder cadence is <strong>${cadLabel}</strong>, that padded list compounds to roughly <em>$${fmtInt(annual)} a year</em> across this supplier on ${itemsCount} SKU${itemsCount===1?'':'s'} alone.`;
+    t3.innerHTML = `If your reorder cadence is <strong>${cadLabel}</strong>, that padded list compounds to roughly <em>$${fmtInt(annual)} a year</em> across this supplier on ${itemsCount} part number${itemsCount===1?'':'s'} alone.`;
   }
 
   bindReveals(stage);
 }
 
-/* Save report — generate CSV */
+/* Save report — generate CSV. Gated behind email capture: the report is
+   the highest-intent moment in the funnel, so we collect contact info
+   before handing it over (no-op when the user has already been captured). */
 $('#action-save').addEventListener('click', ()=>{
-  const headers = ['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list ($/ea, derived)','Line you paid ($)','Line MSRP ($)','Line markup ($)'];
-  const lines = DEMO.rows.map(r=>[
-    r.part,
-    `"${(r.desc||'').replace(/"/g,'""')}"`,
-    r.qty,
-    (r.pay||0).toFixed(2),
-    (r.disc||0).toFixed(1),
-    (r.supplierList||0).toFixed(2),
-    r.lineYouPay.toFixed(2),
-    r.lineMsrp.toFixed(2),
-    r.lineMarkup.toFixed(2)
-  ].join(','));
-  const totals = ['','TOTAL','','','','', DEMO.paid.toFixed(2), DEMO.msrp.toFixed(2), DEMO.markup.toFixed(2)].join(',');
-  const csv = [headers.join(','), ...lines, '', totals].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'markup-detector-report.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('Report downloaded');
+  window.requireEmail('export', ()=>{
+    const headers = ['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list ($/ea, derived)','Line you paid ($)','Line MSRP ($)','Line markup ($)'];
+    const lines = DEMO.rows.map(r=>[
+      r.part,
+      `"${(r.desc||'').replace(/"/g,'""')}"`,
+      r.qty,
+      (r.pay||0).toFixed(2),
+      (r.disc||0).toFixed(1),
+      (r.supplierList||0).toFixed(2),
+      r.lineYouPay.toFixed(2),
+      r.lineMsrp.toFixed(2),
+      r.lineMarkup.toFixed(2)
+    ].join(','));
+    const totals = ['','TOTAL','','','','', DEMO.paid.toFixed(2), DEMO.msrp.toFixed(2), DEMO.markup.toFixed(2)].join(',');
+    const csv = [headers.join(','), ...lines, '', totals].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'markup-detector-report.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Report downloaded');
+  });
 });
 
 $('#action-rescan').addEventListener('click', ()=>{
@@ -3058,13 +3318,37 @@ $('#action-audit').addEventListener('click', ()=>{
       input.type='email'; input.placeholder='you@yourshop.com'; input.inputMode='email'; input.autocomplete='email';
     }
   }));
-  $('#cf-form').addEventListener('submit', e=>{
+  const form = $('#cf-form');
+  const submit = $('.cf-submit');
+  const submitLabel = submit.querySelector('span');
+  const originalLabel = submitLabel.textContent;
+
+  form.addEventListener('submit', async e=>{
     e.preventDefault();
     const v = input.value.trim();
     if(!v) return;
-    $('#cf-form').style.display='none';
-    $('#cf-success').classList.add('show');
-    showToast('Request received');
+    const isPhone = input.type === 'tel';
+    if(!isPhone && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){
+      showToast("That email doesn't look right"); return;
+    }
+    if(isPhone && v.replace(/\D+/g,'').length < 10){
+      showToast('Phone needs at least 10 digits'); return;
+    }
+
+    submit.disabled = true;
+    submitLabel.textContent = 'Sending…';
+    try {
+      const payload = isPhone ? { phone:v, trigger:'audit' } : { email:v, trigger:'audit' };
+      await submitLead(payload);
+      rememberLead(payload);
+      form.style.display='none';
+      $('#cf-success').classList.add('show');
+      showToast('Request received');
+    } catch(err) {
+      submit.disabled = false;
+      submitLabel.textContent = originalLabel;
+      showToast(err.message || 'Could not send — try again');
+    }
   });
 })();
 
