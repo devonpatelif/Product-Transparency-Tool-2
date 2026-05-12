@@ -297,21 +297,44 @@ button,input,textarea,select{font:inherit;color:inherit}
 /* HERO TABS — switch between upload and spot-check entry paths.
    Pill-on-pill language matches .cf-tabs / .gate-tabs but sized
    up for hero prominence. */
+/* PILL-TOGGLE SLIDER — shared sliding pill background for any inline
+   tab toggle (.hero-tabs, .cf-tabs, .gate-tabs). The slider is absolutely
+   positioned inside the container; JS sets its transform + width on each
+   .active change so it slides between options. Each container sets its
+   own --toggle-pad to match its inner padding. */
+.pill-toggle-slider{
+  position:absolute;
+  top:var(--toggle-pad,4px);
+  bottom:var(--toggle-pad,4px);
+  left:0;
+  background:var(--text);
+  border-radius:999px;
+  box-shadow:0 4px 12px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.12);
+  transition:
+    transform 520ms cubic-bezier(.32,.72,0,1),
+    width 520ms cubic-bezier(.32,.72,0,1);
+  will-change:transform,width;
+  z-index:0;
+  pointer-events:none;
+}
+
 .hero-tabs{
   position:relative;z-index:1;
   display:inline-flex;gap:0;padding:5px;
   background:var(--surface);border:1px solid var(--border);
   border-radius:999px;margin-bottom:24px;
   opacity:0;animation:fadeUp .9s var(--ease-out) .75s forwards;
+  --toggle-pad:5px;
 }
 .hero-tab{
+  position:relative;z-index:1;
   padding:10px 22px;border-radius:999px;background:transparent;border:none;
   font-size:13px;font-weight:600;letter-spacing:-.005em;
   color:var(--text-2);cursor:pointer;
-  transition:all .25s var(--ease-out);
+  transition:color .38s cubic-bezier(.32,.72,0,1);
 }
-.hero-tab:hover{color:var(--text)}
-.hero-tab.active{background:var(--text);color:var(--bg)}
+.hero-tab:hover:not(.active){color:var(--text)}
+.hero-tab.active{color:var(--bg)}
 
 .hero-panel{
   position:relative;z-index:1;width:100%;
@@ -1480,13 +1503,15 @@ body.in-flow .topbar{display:none}
 .cf-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;color:var(--text);margin-bottom:8px;position:relative}
 .cf-sub{font-size:14px;color:var(--text-2);margin-bottom:32px;line-height:1.5;position:relative}
 .cf-sub strong{color:var(--text);font-weight:700}
-.cf-tabs{display:inline-flex;gap:0;padding:4px;background:var(--surface);border-radius:999px;margin-bottom:18px;position:relative}
+.cf-tabs{display:inline-flex;gap:0;padding:4px;background:var(--surface);border-radius:999px;margin-bottom:18px;position:relative;--toggle-pad:4px}
 .cf-tab{
+  position:relative;z-index:1;
   padding:8px 22px;border-radius:999px;background:transparent;border:none;cursor:pointer;
   font-size:13px;font-weight:600;color:var(--text-2);
-  transition:all .25s var(--ease-out);
+  transition:color .38s cubic-bezier(.32,.72,0,1);
 }
-.cf-tab.active{background:var(--text);color:var(--bg)}
+.cf-tab:hover:not(.active){color:var(--text)}
+.cf-tab.active{color:var(--bg)}
 .cf-form{display:flex;gap:10px;max-width:480px;margin:0 auto;position:relative}
 @media(max-width:520px){.cf-form{flex-direction:column}}
 .cf-input{
@@ -1575,15 +1600,19 @@ body.in-flow .topbar{display:none}
 }
 .gate-sub{font-size:14px;color:var(--text-2);line-height:1.5;margin-bottom:22px}
 .gate-tabs{
+  position:relative;
   display:inline-flex;gap:0;padding:4px;
   background:var(--surface);border-radius:999px;margin-bottom:14px;
+  --toggle-pad:4px;
 }
 .gate-tab{
+  position:relative;z-index:1;
   padding:7px 18px;border-radius:999px;background:transparent;border:none;cursor:pointer;
   font-size:12px;font-weight:600;color:var(--text-2);
-  transition:all .2s var(--ease-out);
+  transition:color .38s cubic-bezier(.32,.72,0,1);
 }
-.gate-tab.active{background:var(--text);color:var(--bg)}
+.gate-tab:hover:not(.active){color:var(--text)}
+.gate-tab.active{color:var(--bg)}
 .gate-form{display:flex;gap:8px}
 @media(max-width:480px){.gate-form{flex-direction:column}}
 .gate-input{
@@ -1763,6 +1792,7 @@ body.in-flow .topbar{display:none}
   <p class="lede">Drop in any quote or invoice. We compare every line item against manufacturer&nbsp;MSRP and show you exactly where the markup is hiding — line by line, dollar by dollar.</p>
 
   <div class="hero-tabs" role="tablist" aria-label="How to start">
+    <div class="pill-toggle-slider" aria-hidden="true"></div>
     <button class="hero-tab active" id="hero-tab-upload" data-mode="upload"
             role="tab" aria-selected="true" aria-controls="hero-panel-upload" type="button">
       Upload invoice
@@ -2149,14 +2179,6 @@ body.in-flow .topbar{display:none}
         <div class="next-desc">Download a PDF-style ledger you can take back to your supplier — or keep for the next negotiation.</div>
         <span class="next-arrow">Download CSV <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </button>
-      <button class="next-card reveal" id="action-audit" type="button">
-        <div class="next-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        </div>
-        <div class="next-title">Audit your last 90 days</div>
-        <div class="next-desc">Send us your last quarter of invoices and we'll quantify the total leak across every distributor and part number.</div>
-        <span class="next-arrow">Start full audit <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
-      </button>
       <button class="next-card reveal" id="action-rescan" type="button">
         <div class="next-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -2172,6 +2194,7 @@ body.in-flow .topbar{display:none}
       <h3 class="cf-title">Want a quote without the markup?</h3>
       <p class="cf-sub">Drop your email or phone number and a sales rep will follow up for more details</p>
       <div class="cf-tabs" role="tablist" aria-label="Contact method">
+        <div class="pill-toggle-slider" aria-hidden="true"></div>
         <button class="cf-tab active" data-mode="email" role="tab" aria-selected="true" type="button">Email</button>
         <button class="cf-tab" data-mode="phone" role="tab" aria-selected="false" type="button">Phone</button>
       </div>
@@ -2257,6 +2280,7 @@ body.in-flow .topbar{display:none}
     <h3 class="gate-title" id="gate-title">Reveal your full markup.</h3>
     <p class="gate-sub" id="gate-sub">See every dollar of inflation on your invoice — line by line, supplier list price versus manufacturer MSRP.</p>
     <div class="gate-tabs" role="tablist" aria-label="Contact method">
+      <div class="pill-toggle-slider" aria-hidden="true"></div>
       <button class="gate-tab active" data-mode="email" role="tab" aria-selected="true" type="button">Email</button>
       <button class="gate-tab" data-mode="phone" role="tab" aria-selected="false" type="button">Phone</button>
     </div>
@@ -2672,6 +2696,51 @@ async function submitLead({ email, phone, trigger }){
     if(e.key==='Enter' || e.key===' '){ e.preventDefault(); input.click(); }
   });
 })();
+
+/* ════════════════════════════════════════════════════════════════
+   PILL-TOGGLE SLIDER — animates a sliding pill background between
+   options on any inline tab toggle. Each toggle container holds a
+   .pill-toggle-slider div; this helper measures the active option's
+   rect and sets transform + width so the slider smoothly tracks it.
+
+   Class changes are observed (no coupling with the existing click
+   handlers — they keep toggling .active as before). Size changes are
+   observed too so the slider repositions silently when a hidden
+   container (e.g. a modal) becomes visible, when fonts load, or on
+   window resize.
+   ════════════════════════════════════════════════════════════════ */
+function initPillToggle(container, optionSelector, activeClass = 'active'){
+  const slider = container.querySelector('.pill-toggle-slider');
+  if(!slider) return;
+  const getOptions = () => Array.from(container.querySelectorAll(optionSelector));
+  const getActive  = () => getOptions().find(o => o.classList.contains(activeClass)) || getOptions()[0];
+
+  function moveTo(target, animate){
+    if(!target) return;
+    const trackRect  = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    if(trackRect.width === 0) return;  // not laid out yet (hidden)
+    if(animate === false){
+      slider.style.transition = 'none';
+      slider.style.width      = targetRect.width + 'px';
+      slider.style.transform  = `translateX(${targetRect.left - trackRect.left}px)`;
+      requestAnimationFrame(() => { slider.style.transition = ''; });
+    } else {
+      slider.style.width     = targetRect.width + 'px';
+      slider.style.transform = `translateX(${targetRect.left - trackRect.left}px)`;
+    }
+  }
+
+  // Animate whenever a button's .active class flips (driven by the
+  // container's existing click handler — we don't replace it).
+  const classObs = new MutationObserver(() => moveTo(getActive(), true));
+  getOptions().forEach(opt => classObs.observe(opt, {attributes:true, attributeFilter:['class']}));
+
+  // Silently reposition when the container appears/resizes (modal open,
+  // fonts loaded, window resize). ResizeObserver fires on initial layout.
+  const sizeObs = new ResizeObserver(() => moveTo(getActive(), false));
+  sizeObs.observe(container);
+}
 
 /* ════════════════════════════════════════════════════════════════
    HERO TABS — toggle between upload and spot-check panels.
@@ -4083,27 +4152,52 @@ async function runResolution(){
 
 /* Save report — generate CSV. Gated behind email capture: the report is
    the highest-intent moment in the funnel, so we collect contact info
-   before handing it over (no-op when the user has already been captured). */
+   before handing it over (no-op when the user has already been captured).
+   Layout: title, one verdict line, line-by-line table with totals row,
+   single CTA at the bottom. */
 $('#action-save').addEventListener('click', ()=>{
   window.requireEmail('export', ()=>{
-    const headers = ['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list price ($/ea, derived)','Line you paid ($)','Line MSRP ($)','Line markup ($)'];
-    const lines = DEMO.rows.map(r=>[
-      r.part,
-      `"${(r.desc||'').replace(/"/g,'""')}"`,
-      r.qty,
-      (r.pay||0).toFixed(2),
-      (r.disc||0).toFixed(1),
-      (r.supplierList||0).toFixed(2),
-      r.lineYouPay.toFixed(2),
-      r.lineMsrp.toFixed(2),
-      r.lineMarkup.toFixed(2)
-    ].join(','));
-    const totals = ['','TOTAL','','','','', DEMO.paid.toFixed(2), DEMO.msrp.toFixed(2), DEMO.markup.toFixed(2)].join(',');
-    const csv = [headers.join(','), ...lines, '', totals].join('\n');
-    const blob = new Blob([csv], {type:'text/csv'});
+    // RFC 4180 escape: quote anything containing comma, quote, or newline.
+    const f = v => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+    };
+    const row = arr => arr.map(f).join(',');
+
+    const padAmt = Math.abs(DEMO.markup);
+    const verdict = DEMO.markup > 0 ? `Supplier marked up MSRP by $${fmt(padAmt)}`
+                  : DEMO.markup < 0 ? `Supplier list price is $${fmt(padAmt)} below MSRP`
+                  :                   'Supplier list price matches MSRP';
+    const now = new Date();
+    const pad2 = n => String(n).padStart(2,'0');
+    const dateStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+
+    const out = [];
+    out.push(row(['Industrial Finishes — Markup Detector Report']));
+    out.push(row([verdict]));
+    out.push('');
+    out.push(row(['Part','Description','Qty','You pay ($/ea)','Stated disc (%)','Supplier list ($/ea)','Line paid ($)','Line MSRP ($)','Markup ($)']));
+    DEMO.rows.forEach(r=>{
+      out.push(row([
+        r.part || '',
+        r.desc || '',
+        r.qty,
+        (r.pay||0).toFixed(2),
+        (r.disc||0).toFixed(1),
+        (r.supplierList||0).toFixed(2),
+        r.lineYouPay.toFixed(2),
+        r.lineMsrp.toFixed(2),
+        r.lineMarkup.toFixed(2),
+      ]));
+    });
+    out.push(row(['','TOTAL','','','', DEMO.listSum.toFixed(2), DEMO.paid.toFixed(2), DEMO.msrp.toFixed(2), DEMO.markup.toFixed(2)]));
+
+    // BOM so Excel reads the Unicode em-dash / minus correctly as UTF-8.
+    const csv = '﻿' + out.join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'markup-detector-report.csv';
+    a.download = `markup-report-${dateStr}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
     showToast('Report downloaded');
@@ -4140,11 +4234,6 @@ $('#action-rescan').addEventListener('click', ()=>{
   const hDisc = $('#hsc-disc'); if(hDisc) hDisc.value = '';
   const hErr  = $('#hsc-error');if(hErr)  hErr.hidden = true;
   window.scrollTo({top:0, behavior:'smooth'});
-});
-
-$('#action-audit').addEventListener('click', ()=>{
-  $('.contact-form-wrap').scrollIntoView({behavior:'smooth', block:'center'});
-  $('#cf-input').focus();
 });
 
 /* ════════════════════════════════════════════════════════════════
@@ -4196,6 +4285,16 @@ $('#action-audit').addEventListener('click', ()=>{
     }
   });
 })();
+
+/* ════════════════════════════════════════════════════════════════
+   Wire the pill-toggle slider for every tab toggle on the page.
+   Runs after all the click handlers above have been bound so the
+   slider's MutationObserver picks up the same .active flips they
+   already drive — no need to refactor the existing controllers.
+   ════════════════════════════════════════════════════════════════ */
+$$('.hero-tabs').forEach(el => initPillToggle(el, '.hero-tab'));
+$$('.cf-tabs').forEach(el  => initPillToggle(el, '.cf-tab'));
+$$('.gate-tabs').forEach(el=> initPillToggle(el, '.gate-tab'));
 
 /* ════════════════════════════════════════════════════════════════
    KEYBOARD: press D for demo
