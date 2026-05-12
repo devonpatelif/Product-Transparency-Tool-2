@@ -184,12 +184,88 @@ button,input,textarea,select{font:inherit;color:inherit}
    bg is navy, so the logo gets inverted to read white. Light-theme keeps
    the original black artwork. */
 .brand-logo{
-  height:64px;width:auto;display:block;
+  height:72px;width:auto;display:block;
   filter:invert(1);
   transition:transform .3s var(--ease-spring),filter .3s ease;
 }
 [data-theme="light"] .brand-logo{filter:none}
 .brand:hover .brand-logo{transform:scale(1.03)}
+
+/* Brand info column — description + collapsible "How it works"
+   pinned to the hero's top-left, just under the topbar wordmark, so
+   they read as supporting brand copy paired with the logo above.
+   Hidden during the flow. */
+.brand-info{
+  position:absolute;
+  /* Top value clears the fixed topbar (logo 72px + 18×2 padding ≈ 108px)
+     with a small gap so the description sits just beneath it. */
+  top:118px;left:var(--gutter);
+  max-width:340px;
+  z-index:3;
+  opacity:0;
+  animation:fadeUp .9s var(--ease-out) .35s forwards;
+}
+.brand-desc{
+  font-size:13px;line-height:1.6;letter-spacing:.005em;
+  color:var(--text-2);
+  text-align:left;
+  margin-bottom:14px;
+}
+.brand-desc strong{color:var(--text);font-weight:600}
+.brand-desc em{
+  /* Inter italic instead of Instrument Serif — the display serif looks
+     elegant in the giant headline but turns mushy at body sizes. */
+  font-style:italic;
+  color:var(--text);
+}
+
+/* "How it works" disclosure — small trigger that reveals a 3-step
+   explainer beneath. Uses <details> for native a11y; the chevron
+   rotates open via the [open] attribute selector. */
+.howto{display:block}
+.howto summary{
+  list-style:none;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;letter-spacing:.01em;
+  color:var(--truth);
+  padding:4px 0;
+  transition:color .2s ease;
+}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary:hover{color:var(--truth-deep)}
+.howto-arrow{
+  width:12px;height:12px;
+  transition:transform .3s var(--ease-spring);
+}
+.howto[open] .howto-arrow{transform:rotate(180deg)}
+.howto-steps{
+  list-style:none;margin:10px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:10px;
+  animation:fadeUp .35s var(--ease-out) both;
+}
+.howto-step{display:flex;align-items:flex-start;gap:10px}
+.howto-num{
+  flex-shrink:0;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--truth-soft);color:var(--truth);
+  font-size:10px;font-weight:700;
+  display:grid;place-items:center;
+  margin-top:1px;
+  font-variant-numeric:tabular-nums;
+}
+.howto-step-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.howto-step-title{font-size:12px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.howto-step-desc{font-size:11.5px;line-height:1.5;color:var(--text-2)}
+
+@media(max-width:1024px){
+  /* On narrower viewports the column would overlap the centered
+     headline. Drop it back into normal flow above the headline. */
+  .brand-info{position:static;max-width:62ch;margin:0 auto 24px;text-align:center}
+  .brand-desc{text-align:center}
+  .howto summary{justify-content:center}
+}
+body.in-flow .brand-info{display:none}
+
 
 /* ════════════════════════════════════════════════════════════════
    FLOW PROGRESS BAR
@@ -257,6 +333,35 @@ button,input,textarea,select{font:inherit;color:inherit}
   .progress-step-label{display:none}
   .progress-divider{width:14px}
 }
+
+/* Hint chip — sits just under the progress bar. Fades in only when a
+   step actually has a wayfinder available, and fades out the moment
+   the user begins hovering (so it doesn't sit on top of the spotlight). */
+.progress-hint{
+  position:fixed;top:64px;left:50%;
+  transform:translate(-50%,-6px);
+  z-index:59;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:999px;
+  background:var(--surface);
+  font-size:11px;font-weight:500;color:var(--text-2);
+  letter-spacing:.02em;
+  opacity:0;pointer-events:none;
+  cursor:help;
+  transition:opacity .35s var(--ease-out),transform .35s var(--ease-out),color .2s ease,background .2s ease;
+}
+.progress-hint svg{width:11px;height:11px;opacity:.85}
+.progress-hint.is-available{
+  opacity:.85;
+  pointer-events:auto;
+  transform:translate(-50%,0);
+}
+.progress-hint.is-available:hover{color:var(--text);background:var(--surface-2)}
+.progress-hint.is-hidden{opacity:0!important;pointer-events:none!important}
+/* Hero already provides plenty of orientation (brand description +
+   "How it works" disclosure), so the hint is reserved for the
+   in-flow stages where the wayfinder is less obvious. */
+body:not(.in-flow) .progress-hint{display:none}
 
 .brand-mark{
   width:30px;height:30px;border-radius:8px;
@@ -372,7 +477,7 @@ button,input,textarea,select{font:inherit;color:inherit}
   opacity:0;animation:fadeUp .9s var(--ease-out) .65s forwards;
 }
 
-/* HERO TABS — switch between upload and spot-check entry paths.
+/* HERO TABS — switch between upload and quick-lookup entry paths.
    Pill-on-pill language matches .cf-tabs / .gate-tabs but sized
    up for hero prominence. */
 /* PILL-TOGGLE SLIDER — shared sliding pill background for any inline
@@ -419,7 +524,7 @@ button,input,textarea,select{font:inherit;color:inherit}
   display:flex;flex-direction:column;align-items:center;
 }
 .hero-panel[hidden]{display:none}
-/* Spot-check panel matches the upload panel's 64px bottom-margin
+/* Quick-lookup panel matches the upload panel's 64px bottom-margin
    (already on .hero-actions) so the trust-row sits at the same
    vertical position regardless of which tab is active. */
 #hero-panel-spotcheck{margin-bottom:32px}
@@ -1714,20 +1819,27 @@ body.in-flow .example-strip{display:none}
 .footer{
   padding:48px var(--gutter);
   border-top:1px solid var(--border);
-  display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+  display:flex;align-items:flex-start;gap:32px;flex-wrap:wrap;
   font-size:12px;color:var(--text-3);
   position:relative;z-index:2;
 }
-.footer-brand{display:flex;align-items:center;gap:10px}
+.footer-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .footer-brand .brand-mark{width:24px;height:24px;border-radius:6px}
 .footer-brand .brand-mark svg{width:13px;height:13px}
 /* Footer wordmark — same black PNG as the topbar logo, smaller. Dark
    theme inverts to white; light theme keeps the original black. */
-.footer-logo{height:64px;width:auto;display:block;filter:invert(1)}
+.footer-logo{height:72px;width:auto;display:block;filter:invert(1)}
 [data-theme="light"] .footer-logo{filter:none}
+.footer-body{flex:1;min-width:280px;display:flex;flex-direction:column;gap:14px}
 .footer-meta{display:flex;gap:18px;flex-wrap:wrap}
 .footer-meta a{color:var(--text-2);text-decoration:none;transition:color .2s}
 .footer-meta a:hover{color:var(--text)}
+/* Legal disclaimer — fine print sits to the right of the logo,
+   filling the available width so the footer reads as one balanced row. */
+.footer-disclaimer{
+  font-size:11px;line-height:1.65;color:var(--text-3);
+  letter-spacing:.005em;
+}
 
 /* ════════════════════════════════════════════════════════════════
    LEAD GATE MODAL
@@ -2008,9 +2120,51 @@ body.in-flow .example-strip{display:none}
   </div>
 </div>
 
+<!-- Small cue under the progress bar — appears only when a step
+     currently has a wayfinder available, hides once the user hovers. -->
+<div class="progress-hint" id="progress-hint" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+  <span>Hover for guidance</span>
+</div>
+
 <!-- ═══════════════ ACT 1: HOOK ═══════════════ -->
 <section class="hero" id="hero">
   <canvas id="hero-canvas" aria-hidden="true"></canvas>
+
+  <div class="brand-info">
+    <p class="brand-desc">
+      Paint, body, and equipment material costs move fast. <strong>Markup Detector</strong> helps collision repair facilities and insurance providers access current retail pricing on participating PBE products &mdash; <em>quickly, clearly, and with confidence.</em>
+    </p>
+    <details class="howto" id="howto">
+      <summary class="howto-trigger">
+        <span>How it works</span>
+        <svg class="howto-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </summary>
+      <ol class="howto-steps">
+        <li class="howto-step">
+          <span class="howto-num">1</span>
+          <div class="howto-step-body">
+            <span class="howto-step-title">Upload or quick lookup</span>
+            <span class="howto-step-desc">Drop a PDF or photo of any supplier invoice, or type in a single part number.</span>
+          </div>
+        </li>
+        <li class="howto-step">
+          <span class="howto-num">2</span>
+          <div class="howto-step-body">
+            <span class="howto-step-title">Edit &amp; confirm</span>
+            <span class="howto-step-desc">Verify our part-number matches and tweak the quantity, what you paid, or the stated discount.</span>
+          </div>
+        </li>
+        <li class="howto-step">
+          <span class="howto-num">3</span>
+          <div class="howto-step-body">
+            <span class="howto-step-title">Analyze</span>
+            <span class="howto-step-desc">See exactly where markup is hiding &mdash; line by line, against manufacturer MSRP.</span>
+          </div>
+        </li>
+      </ol>
+    </details>
+  </div>
 
   <h1 class="headline">
     <span class="h-line">Your supplier says <span class="num-token num-stated"><span class="num-tween" id="hl-stated" data-target="40">40</span>% off</span>.</span>
@@ -2027,7 +2181,7 @@ body.in-flow .example-strip{display:none}
     </button>
     <button class="hero-tab" id="hero-tab-spotcheck" data-mode="spotcheck"
             role="tab" aria-selected="false" aria-controls="hero-panel-spotcheck" type="button">
-      Spot-check a part
+      Quick lookup
     </button>
   </div>
 
@@ -2433,9 +2587,10 @@ body.in-flow .example-strip{display:none}
   <div class="footer-brand">
     <img src="MUD%20Logo.png" alt="Markup Detector by Industrial Finishes" class="footer-logo">
   </div>
-  <div class="footer-meta">
-    <span>MSRP = manufacturer suggested retail price</span>
-    <a href="https://industrialfinishes.com" target="_blank" rel="noopener">industrialfinishes.com</a>
+  <div class="footer-body">
+    <p class="footer-disclaimer">
+      Maintained and presented by Industrial Finishes &amp; Systems, Inc. All rights reserved. Pricing information is limited to participating suppliers and selected product lines. Information provided is for reference purposes only. Pricing is updated regularly; however, posted prices may temporarily lag behind manufacturer price adjustments or announcements. Displayed pricing does not guarantee product availability. All prices are subject to change without notice. Pricing shown may vary by market, freight conditions, or supplier program changes. Final invoiced pricing may differ from posted pricing. Not all products or suppliers are represented within the system. Users are responsible for independently verifying pricing and product information prior to quoting, invoicing, ordering, or submitting materials for reimbursement.
+    </p>
   </div>
 </footer>
 
@@ -2776,14 +2931,30 @@ function setProgress(activeStep){
     });
   }
 
+  const hint = $('#progress-hint');
+
+  // Resolve a mapping's target — accepts either an Element directly or
+  // a function returning one (so a mapping can choose its target at
+  // show-time, e.g. dropzone vs. quick-lookup form depending on which
+  // tab the user has active).
+  function resolveTarget(t){
+    if(!t) return null;
+    if(typeof t === 'function') t = t();
+    return t || null;
+  }
+
   function showFor(mapping){
-    const { step: stepEl, target: targetEl, getSpotlightTargets } = mapping;
-    if(!targetEl.getBoundingClientRect().width) return;
-    current = mapping;
+    const { step: stepEl, getSpotlightTargets } = mapping;
+    const targetEl = resolveTarget(mapping.target);
+    if(!targetEl || !targetEl.getBoundingClientRect().width) return;
+    // Snapshot the resolved target on `current` so scroll/resize syncs
+    // operate on the same element the show used.
+    current = { ...mapping, step: stepEl, target: targetEl };
     drawPath(stepEl, targetEl);
     updateHoles(getSpotlightTargets ? getSpotlightTargets() : [targetEl]);
     svg.classList.add('show');
     if(spotlight) spotlight.classList.add('show');
+    if(hint) hint.classList.add('is-hidden');
     // Reset offsets so the draw-in transition replays cleanly each time
     const len = path.getTotalLength();
     [path, glow].forEach(el => { el.style.strokeDashoffset = len; });
@@ -2795,19 +2966,37 @@ function setProgress(activeStep){
     current = null;
     svg.classList.remove('show');
     if(spotlight) spotlight.classList.remove('show');
+    if(hint) hint.classList.remove('is-hidden');
   }
 
   // Per-step → target mappings. `target` = where the arrow points.
+  // `step` = the element the arrow visually originates from.
+  // `trigger` (optional) = where to attach hover handlers; defaults to
+  // `step`. Use this when you want a bigger hover area than the visual
+  // origin point (e.g. hover the whole row, arrow leaves the small icon).
   // `getSpotlightTargets()` (optional) returns the list of elements to
   // punch out of the dim overlay; defaults to just [target].
   // `isAvailable` gates the show so each arrow only fires when its
   // target element is actually rendered.
+  // Returns whichever input affordance the user has currently picked:
+  // the dropzone if Upload tab is active, or the Quick Lookup form if
+  // that tab is active. `offsetParent === null` is a cheap visibility
+  // probe — display:none nodes have null offsetParent.
+  const visibleUploadTarget = () => {
+    const dz = $('#dropzone');
+    if(dz && dz.offsetParent !== null) return dz;
+    const form = $('#hsc-form');
+    if(form && form.offsetParent !== null) return form;
+    return null;
+  };
+
   const mappings = [
     {
       step: document.querySelector('.progress-step[data-step="1"]'),
-      target: $('#dropzone'),
-      // Upload → dropzone is only valid on the hero, before in-flow.
-      isAvailable: () => !document.body.classList.contains('in-flow'),
+      // Adapts to the active tab (dropzone or Quick Lookup form).
+      target: visibleUploadTarget,
+      isAvailable: () => !document.body.classList.contains('in-flow')
+                          && visibleUploadTarget() !== null,
     },
     {
       step: document.querySelector('.progress-step[data-step="2"]'),
@@ -2823,20 +3012,61 @@ function setProgress(activeStep){
       ].filter(Boolean),
       isAvailable: () => {
         if(!document.body.classList.contains('in-flow')) return false;
+        // Once the verdict is revealed, the user has moved past the
+        // edit-and-confirm step — drop the hint even though the evidence
+        // stage is still in the DOM above the verdict.
+        const vd = $('#stage-verdict');
+        if(vd && !vd.hidden) return false;
         const ev = $('#stage-evidence');
         return !!(ev && !ev.hidden);
       },
+    },
+    {
+      // "How it works" step 1 — same Upload wayfinder, but originating
+      // from the numbered "1" circle. Hovering anywhere on the row fires
+      // the arrow, but the arrow visually emerges from the small green
+      // pip so it reads as a step-specific cue.
+      step: document.querySelector('.howto-step:first-child .howto-num'),
+      trigger: document.querySelector('.howto-step:first-child'),
+      target: visibleUploadTarget,
+      isAvailable: () => !document.body.classList.contains('in-flow')
+                          && visibleUploadTarget() !== null,
     },
   ];
 
   mappings.forEach(m => {
     if(!m.step || !m.target) return;
+    const triggerEl = m.trigger || m.step;
     const tryShow = () => { if(m.isAvailable()) showFor(m); };
-    m.step.addEventListener('mouseenter', tryShow);
-    m.step.addEventListener('mouseleave', hide);
-    m.step.addEventListener('focus', tryShow);
-    m.step.addEventListener('blur',  hide);
+    triggerEl.addEventListener('mouseenter', tryShow);
+    triggerEl.addEventListener('mouseleave', hide);
+    triggerEl.addEventListener('focus', tryShow);
+    triggerEl.addEventListener('blur',  hide);
   });
+
+  // Show/hide the "Hover for guidance" cue depending on whether
+  // any mapping is currently usable. Triggered on body class changes
+  // (in-flow toggle) and stage-visibility changes.
+  function refreshHint(){
+    if(!hint) return;
+    const anyAvailable = mappings.some(m => m.step && m.target && m.isAvailable());
+    hint.classList.toggle('is-available', anyAvailable);
+  }
+  const stateObs = new MutationObserver(refreshHint);
+  stateObs.observe(document.body, {attributes:true, attributeFilter:['class']});
+  $$('.stage').forEach(s => stateObs.observe(s, {attributes:true, attributeFilter:['hidden']}));
+  refreshHint();
+
+  // Hovering the hint itself fires the currently-available wayfinder —
+  // the chip is the "where do I look?" affordance, so it should be
+  // actionable, not just informative.
+  if(hint){
+    hint.addEventListener('mouseenter', () => {
+      const m = mappings.find(x => x.step && x.target && x.isAvailable());
+      if(m) showFor(m);
+    });
+    hint.addEventListener('mouseleave', hide);
+  }
 
   // Keep the arrow + cutouts aligned if the page scrolls or resizes
   // while the wayfinder is open. rAF-throttled so a fast scroll
@@ -3134,7 +3364,7 @@ function initPillToggle(container, optionSelector, activeClass = 'active'){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   HERO TABS — toggle between upload and spot-check panels.
+   HERO TABS — toggle between upload and quick-lookup panels.
    Tab swap must feel instant. Both panels' inner content (.hero-actions,
    .hsc-form) carry an 0.85s-delayed fadeUp for the initial page-load
    choreography. CSS animations re-fire when an element transitions from
@@ -3221,7 +3451,7 @@ function initPillToggle(container, optionSelector, activeClass = 'active'){
     submit.disabled = true;
     submitLabel.textContent = 'Checking…';
     runSpotCheck(partVal, payVal, discVal).catch(err=>{
-      console.error('Spot-check failed:', err);
+      console.error('Quick lookup failed:', err);
       showErr(err.message || 'Could not check that part right now.');
     }).finally(()=>{
       submit.disabled = false;
@@ -3232,28 +3462,13 @@ function initPillToggle(container, optionSelector, activeClass = 'active'){
 
 async function runSpotCheck(partInput, payInput, discInput){
   if(flowStarted) return;
-  flowStarted = true;
 
-  // Surface management mirrors launchFlow().
-  const flow = $('#flow');
-  flow.classList.add('active');
-  document.body.classList.add('in-flow');
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0,0);
-  // Spot-check skips the evidence stage (user typed every value), so
-  // step 1 marks immediately as done and we'll jump to step 3 in
-  // revealVerdict() below. setProgress(2) is shown briefly during the
-  // catalog match so the bar isn't a 1→3 jump.
-  setProgress(1);
-
-  const scanStage = $('#stage-scan');
-  scanStage.hidden = false;
-  void scanStage.offsetWidth;
-  scanStage.classList.add('visible');
-  setStatus('Looking up your part');
-
-  // Single-row payload; the match endpoint accepts the same shape the
-  // multi-line flow sends.
+  // ── Pre-flow match check ──────────────────────────────────────────
+  // Hit the match endpoint BEFORE switching the user into the loading
+  // stage. If no match comes back (or the network fails), throw so the
+  // form's catch handler surfaces the error inline on the home screen
+  // — no scan overlay, no bounce-back. The endpoint is fast (~500ms)
+  // and the submit button is already in its "Checking…" state.
   const payload = {
     items: [{
       partNumber: partInput,
@@ -3275,13 +3490,11 @@ async function runSpotCheck(partInput, payInput, discInput){
     const data = await resp.json();
     results = Array.isArray(data.results) ? data.results : [];
   } catch(err){
-    flowStarted = false;
-    showScanError(err.message || 'We could not reach the catalog. Try again.');
-    throw err;
+    throw new Error(err.message || 'We could not reach the catalog. Try again.');
   }
 
   // Auto-resolve when every candidate shares the same MSRP — mirrors
-  // runRealScan so behavior is consistent across upload + spot-check.
+  // runRealScan so behavior is consistent across upload + quick lookup.
   results.forEach(r => {
     if(r.ambiguous && Array.isArray(r.matchOptions) && r.matchOptions.length > 1){
       const firstPrice = Number(r.matchOptions[0].price);
@@ -3293,10 +3506,39 @@ async function runSpotCheck(partInput, payInput, discInput){
 
   const r0 = results[0];
   if(!r0 || !r0.matched || !r0.catalog){
-    flowStarted = false;
-    showScanError(`No catalog match for "${esc(partInput)}". Try the full part number or a different product name.`);
-    return;
+    // Throw → submit handler's .catch shows it inline beside the form.
+    throw new Error(`No catalog match for "${partInput}". Try the full part number or a different product name.`);
   }
+
+  // For unambiguous matches we can pre-check the MSRP too; throw early
+  // so the user sees the message inline rather than after a flow entry.
+  // Ambiguous matches need disambig first (the picked catalog could
+  // differ) — those get checked again post-disambig in-flow.
+  if(!r0.ambiguous){
+    const preMsrp = Number(r0.catalog.price) || 0;
+    if(preMsrp <= 0){
+      throw new Error('We found that part, but our catalog has no MSRP for it yet.');
+    }
+  }
+
+  // ── Match looks good — enter the flow ────────────────────────────
+  flowStarted = true;
+  const flow = $('#flow');
+  flow.classList.add('active');
+  document.body.classList.add('in-flow');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  // Quick lookup skips the evidence stage (user typed every value), so
+  // step 1 marks immediately as done and we'll jump to step 3 in
+  // revealVerdict() below. setProgress(2) is shown briefly during the
+  // disambig/calculate sequence so the bar isn't a 1→3 jump.
+  setProgress(1);
+
+  const scanStage = $('#stage-scan');
+  scanStage.hidden = false;
+  void scanStage.offsetWidth;
+  scanStage.classList.add('visible');
+  setStatus('Calculating markup');
 
   // Reuse the disambig modal exactly as the multi-item flow does. The
   // UI doesn't care that results.length === 1.
@@ -3306,12 +3548,12 @@ async function runSpotCheck(partInput, payInput, discInput){
   }
 
   setProgress(2);
-  setStatus('Calculating markup');
   await sleep(450);
 
   const cat  = r0.catalog;
   const msrp = Number(cat.price) || 0;
   if(msrp <= 0){
+    // Edge case: user picked an option through disambig that has no MSRP.
     flowStarted = false;
     showScanError('We found that part, but our catalog has no MSRP for it yet.');
     return;
@@ -3319,13 +3561,13 @@ async function runSpotCheck(partInput, payInput, discInput){
 
   // Synthetic 1-item invoice fed to the same downstream stages.
   activeInvoice = {
-    supplier: 'Spot-check',
+    supplier: 'Quick lookup',
     invoiceNum: '',
     date: '',
     items: [{
       part:     cat.part || partInput,
       desc:     cat.desc || partInput,
-      category: cat.catName || cat.category || 'Spot-check',
+      category: cat.catName || cat.category || 'Quick lookup',
       qty:      1,
       pay:      payInput,
       disc:     discInput,
@@ -4630,7 +4872,7 @@ function resetToHero(){
   $('#markup-bars').classList.remove('show', 'is-under');
   $('#verdict-annual').classList.remove('show');
   $$('.num-tween').forEach(el=>{ el.dataset.tweened=''; el.dataset.from=0; });
-  // Clear spot-check inputs so a follow-up check starts fresh.
+  // Clear quick-lookup inputs so a follow-up check starts fresh.
   const hPart = $('#hsc-part'); if(hPart) hPart.value = '';
   const hPay  = $('#hsc-pay');  if(hPay)  hPay.value  = '';
   const hDisc = $('#hsc-disc'); if(hDisc) hDisc.value = '';
