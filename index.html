@@ -191,6 +191,73 @@ button,input,textarea,select{font:inherit;color:inherit}
 [data-theme="light"] .brand-logo{filter:none}
 .brand:hover .brand-logo{transform:scale(1.03)}
 
+/* ════════════════════════════════════════════════════════════════
+   FLOW PROGRESS BAR
+   ════════════════════════════════════════════════════════════════ */
+/* Balanced stepper: contained pill that reads as a quiet UI element,
+   not a focal point. Container is barely-there (3% surface + hairline
+   border, no shadow) so the bar frames the steps without competing
+   with the hero. Inside, the active step gets a dark fill (clearly
+   "you are here") and done steps switch to green-with-check (the
+   destination color from the rest of the app). Active label is bold
+   and full-contrast; pending/done labels recede. */
+.progress-bar{
+  position:fixed;top:26px;left:50%;
+  transform:translate(-50%,-20px);
+  opacity:0;pointer-events:auto;
+  display:inline-flex;align-items:center;gap:12px;
+  padding:6px 16px;border-radius:999px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  z-index:60;
+  animation:progressBarIn .6s var(--ease-out) .5s forwards;
+}
+@keyframes progressBarIn{
+  to{opacity:1;transform:translate(-50%,0)}
+}
+.progress-step{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:500;letter-spacing:-.005em;
+  color:var(--text-3);
+  transition:color .3s ease;
+}
+.progress-step.is-active{color:var(--text);font-weight:600}
+.progress-step.is-done{color:var(--text-2)}
+.progress-step-circle{
+  width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;flex-shrink:0;
+  background:transparent;border:1px solid var(--border-strong);
+  color:var(--text-3);
+  font-size:10px;font-weight:700;
+  transition:all .3s var(--ease-out);
+  position:relative;
+}
+.progress-step.is-active .progress-step-circle{
+  background:var(--text);border-color:var(--text);color:var(--bg);
+}
+.progress-step.is-done .progress-step-circle{
+  background:var(--truth);border-color:var(--truth);color:var(--bg);
+}
+.progress-step-num,.progress-step-check{
+  transition:opacity .25s ease;
+}
+.progress-step-check{
+  width:11px;height:11px;
+  position:absolute;inset:0;margin:auto;
+  opacity:0;
+}
+.progress-step.is-done .progress-step-num{opacity:0}
+.progress-step.is-done .progress-step-check{opacity:1}
+.progress-divider{
+  width:24px;height:1px;background:var(--border);flex-shrink:0;
+}
+@media(max-width:680px){
+  .progress-bar{padding:5px 12px;gap:8px}
+  .progress-step-label{display:none}
+  .progress-divider{width:14px}
+}
+
 .brand-mark{
   width:30px;height:30px;border-radius:8px;
   background:linear-gradient(135deg,var(--truth) 0%,var(--truth-deep) 100%);
@@ -418,6 +485,68 @@ button,input,textarea,select{font:inherit;color:inherit}
 }
 @media(max-width:680px){.hero-actions{flex-direction:column;width:100%;max-width:380px}}
 
+.dropzone-wrap{position:relative;display:flex}
+
+/* Wayfinder arrow — full-viewport SVG overlay. JS draws a path from
+   the bottom of the Upload progress step down to the dropzone. Layered
+   choreography: container fades in, origin dot pops on a spring, then
+   glow + crisp line draw together (glow leads slightly so the foreground
+   stroke feels like it lands inside a soft halo). */
+.wayfinder{
+  position:fixed;inset:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:55;
+  opacity:0;
+  transition:opacity .3s var(--ease-out),filter .3s var(--ease-out);
+  color:var(--truth);
+  /* No filter at rest. Once the spotlight is active and the page dims,
+     brighten + saturate the whole SVG so the brand-green arrow stays
+     visibly luminous against the darkened backdrop — hue stays
+     on-brand, the arrow just becomes more radiant. */
+}
+.wayfinder.show{
+  opacity:1;
+  filter:brightness(1.55) saturate(1.2);
+}
+
+#wayfinder-glow,
+#wayfinder-path{
+  stroke-dasharray:600;
+  stroke-dashoffset:600;
+}
+/* Slightly slower glow + a hair of lead so the halo arrives just
+   before the crisp line traces in over it. */
+#wayfinder-glow{transition:stroke-dashoffset .8s cubic-bezier(.5,.05,.2,1)}
+#wayfinder-path{transition:stroke-dashoffset .7s cubic-bezier(.5,.05,.2,1) .05s}
+.wayfinder.show #wayfinder-glow,
+.wayfinder.show #wayfinder-path{stroke-dashoffset:0}
+
+/* Origin dot — pops in with a small spring before the line draws. */
+#wayfinder-dot{
+  opacity:0;
+  transform:scale(0);
+  transform-box:fill-box;transform-origin:center;
+  transition:opacity .25s ease,transform .35s var(--ease-spring);
+  filter:drop-shadow(0 0 6px var(--truth-glow));
+}
+.wayfinder.show #wayfinder-dot{opacity:1;transform:scale(1)}
+
+body.in-flow .wayfinder{display:none}
+
+/* Spotlight overlay — dims the page through a single full-viewport rect
+   with a rounded-rect cutout positioned over the dropzone. Sits below
+   the wayfinder + progress bar (z:55 / z:60) and above the topbar (50)
+   so those three elements stay fully lit while everything else dims. */
+.spotlight{
+  position:fixed;inset:0;width:100vw;height:100vh;
+  pointer-events:none;z-index:52;
+  opacity:0;
+  transition:opacity .35s var(--ease-out);
+}
+.spotlight.show{opacity:1}
+.spotlight-fill{fill:rgba(7,9,18,.55)}
+[data-theme="light"] .spotlight-fill{fill:rgba(15,20,30,.45)}
+body.in-flow .spotlight{display:none}
+
 /* DROPZONE — primary CTA */
 .dropzone{
   position:relative;cursor:pointer;
@@ -582,7 +711,11 @@ button,input,textarea,select{font:inherit;color:inherit}
    ACT 2-4 — THE REPORT FLOW
    ════════════════════════════════════════════════════════════════ */
 .flow{
-  position:relative;z-index:2;
+  /* z-index 3 (one above the footer's z:2) so the scan overlay inside
+     this stacking context fully covers the footer that follows it in
+     the document — without this, the footer's wordmark + MSRP link
+     paint through the top of the scan stage. */
+  position:relative;z-index:3;
   display:none;
 }
 .flow.active{display:block}
@@ -611,10 +744,11 @@ button,input,textarea,select{font:inherit;color:inherit}
 .stage-scan > *{position:relative;z-index:1}
 
 /* Hide the marketing surface while the flow is active so subsequent
-   stages start at the top of the viewport — no scroll trip down the page. */
+   stages start at the top of the viewport — no scroll trip down the page.
+   Topbar stays visible so the wordmark is a constant across every
+   stage; the scan overlay at z:200 covers it briefly during loading. */
 body.in-flow #hero,
-body.in-flow .example-strip,
-body.in-flow .topbar{display:none}
+body.in-flow .example-strip{display:none}
 
 /* Disambig sub-view inside the scan overlay. When .disambig-mode is set on
    the stage, the loader visuals (eyebrow, title, status, paper, meta) hide
@@ -1582,6 +1716,10 @@ body.in-flow .topbar{display:none}
 .footer-brand{display:flex;align-items:center;gap:10px}
 .footer-brand .brand-mark{width:24px;height:24px;border-radius:6px}
 .footer-brand .brand-mark svg{width:13px;height:13px}
+/* Footer wordmark — same black PNG as the topbar logo, smaller. Dark
+   theme inverts to white; light theme keeps the original black. */
+.footer-logo{height:64px;width:auto;display:block;filter:invert(1)}
+[data-theme="light"] .footer-logo{filter:none}
 .footer-meta{display:flex;gap:18px;flex-wrap:wrap}
 .footer-meta a{color:var(--text-2);text-decoration:none;transition:color .2s}
 .footer-meta a:hover{color:var(--text)}
@@ -1792,14 +1930,81 @@ body.in-flow .topbar{display:none}
   </div>
 </header>
 
+<!-- ═══════════════ WAYFINDER ARROW ═══════════════ -->
+<!-- Full-viewport SVG overlay used to draw a curved arrow from the
+     "Upload" progress step down to the dropzone on hover. Layered for
+     depth: blurred glow underneath, crisp foreground stroke on top,
+     refined chevron tip, anchor dot at the origin. Pure visual hint —
+     pointer-events:none so it never blocks clicks. -->
+<svg class="wayfinder" id="wayfinder" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Chevron arrowhead, drawn as an open path so it inherits the
+         stroke and rounded line caps of the main line. markerUnits=
+         userSpaceOnUse keeps it the same absolute size regardless of
+         the main path's stroke width. -->
+    <marker id="wayfinder-tip" viewBox="0 0 16 16" refX="13" refY="8" markerWidth="18" markerHeight="18" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M3,3 L13,8 L3,13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <filter id="wayfinder-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.5"/>
+    </filter>
+  </defs>
+  <!-- Soft halo behind the main stroke — adds presence without overdoing it. -->
+  <path id="wayfinder-glow" d="" stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round" filter="url(#wayfinder-blur)" opacity=".35"/>
+  <!-- Crisp foreground line + chevron tip. -->
+  <path id="wayfinder-path" d="" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" marker-end="url(#wayfinder-tip)"/>
+  <!-- Anchor dot at the origin (bottom of the Upload step). -->
+  <circle id="wayfinder-dot" cx="0" cy="0" r="4.5" fill="currentColor"/>
+</svg>
+
+<!-- ═══════════════ SPOTLIGHT OVERLAY ═══════════════ -->
+<!-- Dim everything except the progress bar, the wayfinder arrow, and
+     the dropzone. The dimming is a single full-viewport rect with a
+     rounded-rect cutout positioned over the dropzone via SVG mask.
+     Layers above the topbar/hero, below the wayfinder and progress bar. -->
+<svg class="spotlight" id="spotlight" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="spotlight-mask">
+      <rect width="100%" height="100%" fill="white"/>
+      <rect id="spotlight-hole" x="0" y="0" width="0" height="0" rx="24" ry="24" fill="black"/>
+    </mask>
+  </defs>
+  <rect class="spotlight-fill" width="100%" height="100%" mask="url(#spotlight-mask)"/>
+</svg>
+
+<!-- ═══════════════ FLOW PROGRESS BAR ═══════════════ -->
+<!-- Three-step indicator that appears at the top of the page whenever
+     the flow is active. setProgress(n) flips step n to .is-active and
+     steps before it to .is-done (green check). Hidden on the hero. -->
+<div class="progress-bar" id="progress-bar" role="progressbar" aria-label="Flow progress" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+  <div class="progress-step is-active" data-step="1">
+    <span class="progress-step-circle">
+      <span class="progress-step-num">1</span>
+      <svg class="progress-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span class="progress-step-label">Upload</span>
+  </div>
+  <span class="progress-divider" aria-hidden="true"></span>
+  <div class="progress-step" data-step="2">
+    <span class="progress-step-circle">
+      <span class="progress-step-num">2</span>
+      <svg class="progress-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span class="progress-step-label">Edit &amp; confirm</span>
+  </div>
+  <span class="progress-divider" aria-hidden="true"></span>
+  <div class="progress-step" data-step="3">
+    <span class="progress-step-circle">
+      <span class="progress-step-num">3</span>
+      <svg class="progress-step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span class="progress-step-label">Analyze</span>
+  </div>
+</div>
+
 <!-- ═══════════════ ACT 1: HOOK ═══════════════ -->
 <section class="hero" id="hero">
   <canvas id="hero-canvas" aria-hidden="true"></canvas>
-
-  <div class="eyebrow">
-    <span class="eyebrow-dot"></span>
-    The Markup Detector · By Industrial Finishes
-  </div>
 
   <h1 class="headline">
     <span class="h-line">Your supplier says <span class="num-token num-stated"><span class="num-tween" id="hl-stated" data-target="40">40</span>% off</span>.</span>
@@ -1822,16 +2027,18 @@ body.in-flow .topbar{display:none}
 
   <div class="hero-panel" id="hero-panel-upload" role="tabpanel" aria-labelledby="hero-tab-upload">
     <div class="hero-actions">
-      <label class="dropzone" id="dropzone" for="file-input" tabindex="0" aria-label="Upload an invoice or quote">
-        <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
-        <span class="dz-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </span>
-        <span class="dz-text">
-          <span class="dz-title">Drop your invoice or quote</span>
-          <span class="dz-sub">PDF, JPG, PNG · click to browse</span>
-        </span>
-      </label>
+      <div class="dropzone-wrap">
+        <label class="dropzone" id="dropzone" for="file-input" tabindex="0" aria-label="Upload an invoice or quote">
+          <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
+          <span class="dz-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </span>
+          <span class="dz-text">
+            <span class="dz-title">Drop your invoice or quote</span>
+            <span class="dz-sub">PDF, JPG, PNG · click to browse</span>
+          </span>
+        </label>
+      </div>
 
       <button class="btn-demo" id="try-demo" type="button">
         <span class="pulse-dot" aria-hidden="true"></span>
@@ -1862,7 +2069,7 @@ body.in-flow .topbar{display:none}
       </button>
     </form>
     <div class="hsc-error" id="hsc-error" hidden></div>
-    <p class="hsc-fineprint">No upload, no AI cost — we just match against the catalog.</p>
+    <p class="hsc-fineprint">No upload required — we just match against the catalog.</p>
   </div>
 
   <div class="trust-row" id="trust-row">
@@ -1927,10 +2134,6 @@ body.in-flow .topbar{display:none}
 
   <!-- ─── STAGE A: SCANNING ───────────────────────────── -->
   <section class="stage stage-scan" id="stage-scan" hidden>
-    <div class="scan-eyebrow">
-      <span class="scan-dot"></span>
-      Reading your document
-    </div>
     <h2 class="scan-title">Pulling every line item.</h2>
     <div class="scan-status" id="scan-status">Loading document<span class="status-cursor"></span></div>
 
@@ -2230,10 +2433,7 @@ body.in-flow .topbar{display:none}
 <!-- ═══════════════ FOOTER ═══════════════ -->
 <footer class="footer">
   <div class="footer-brand">
-    <span class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-    </span>
-    <span>Industrial Finishes · The Markup Detector</span>
+    <img src="MUD%20Logo.png" alt="Markup Detector by Industrial Finishes" class="footer-logo">
   </div>
   <div class="footer-meta">
     <span>MSRP = manufacturer suggested retail price</span>
@@ -2497,6 +2697,112 @@ function showToast(msg){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(()=>t.classList.remove('show'), 2400);
 }
+
+/* Progress bar — flips the n-th step to .is-active and earlier steps
+   to .is-done (green check). Steps: 1 Upload → 2 Edit & confirm → 3 Analyze. */
+function setProgress(activeStep){
+  const bar = $('#progress-bar');
+  if(!bar) return;
+  bar.setAttribute('aria-valuenow', String(activeStep));
+  bar.querySelectorAll('.progress-step').forEach(el => {
+    const n = Number(el.dataset.step);
+    el.classList.toggle('is-active', n === activeStep);
+    el.classList.toggle('is-done',   n  <  activeStep);
+  });
+}
+
+/* Wayfinder: hovering/focusing the "Upload" step in the top progress
+   bar draws a curved SVG arrow from the step down to the dropzone.
+   Skipped during the flow (when the dropzone isn't the relevant
+   target anymore). Path is recomputed on every show + on resize so
+   the arrow tracks correctly across viewport sizes. */
+(function wayfinder(){
+  const step      = document.querySelector('.progress-step[data-step="1"]');
+  const svg       = $('#wayfinder');
+  const path      = $('#wayfinder-path');
+  const glow      = $('#wayfinder-glow');
+  const dot       = $('#wayfinder-dot');
+  const dz        = $('#dropzone');
+  const spotlight = $('#spotlight');
+  const hole      = $('#spotlight-hole');
+  if(!step || !svg || !path || !glow || !dot || !dz) return;
+
+  function updateHole(){
+    if(!hole) return;
+    const r = dz.getBoundingClientRect();
+    if(!r.width) return;
+    // Breathing room around the cutout so the dropzone's own breathe-glow
+    // animation isn't clipped at the edges.
+    const pad = 16;
+    hole.setAttribute('x', r.left - pad);
+    hole.setAttribute('y', r.top - pad);
+    hole.setAttribute('width',  r.width  + pad * 2);
+    hole.setAttribute('height', r.height + pad * 2);
+  }
+
+  function drawPath(){
+    const s = step.getBoundingClientRect();
+    const d = dz.getBoundingClientRect();
+    if(!s.width || !d.width) return;
+    // Start a few pixels below the bottom-center of the Upload step,
+    // land just above the dropzone's top-center.
+    const sx = s.left + s.width / 2;
+    const sy = s.bottom + 10;
+    const ex = d.left + d.width / 2;
+    const ey = d.top - 14;
+    const dy = ey - sy;
+    // Cubic with control points biased straight down from the start and
+    // straight up from the end. Produces a smooth S regardless of the
+    // horizontal offset between the two anchors.
+    const c1x = sx;
+    const c1y = sy + Math.min(200, dy * 0.55);
+    const c2x = ex;
+    const c2y = ey - Math.min(200, dy * 0.55);
+    const dAttr = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
+    path.setAttribute('d', dAttr);
+    glow.setAttribute('d', dAttr);
+    dot.setAttribute('cx', sx);
+    dot.setAttribute('cy', sy);
+    // Sync the dasharray to the actual path length on every render so
+    // the draw-in spans the full curve regardless of viewport size.
+    const len = path.getTotalLength();
+    [path, glow].forEach(el => {
+      el.style.strokeDasharray  = len;
+      el.style.strokeDashoffset = svg.classList.contains('show') ? 0 : len;
+    });
+  }
+
+  function show(){
+    if(document.body.classList.contains('in-flow')) return;
+    // Bail if the dropzone isn't currently rendered (e.g. user is on
+    // the Spot-check tab) — getBoundingClientRect returns zeros for
+    // display:none nodes, so width === 0 is a reliable signal.
+    if(!dz.getBoundingClientRect().width) return;
+    drawPath();
+    updateHole();
+    svg.classList.add('show');
+    if(spotlight) spotlight.classList.add('show');
+    // Reset offsets so the draw-in transition replays cleanly each time
+    const len = path.getTotalLength();
+    [path, glow].forEach(el => { el.style.strokeDashoffset = len; });
+    requestAnimationFrame(() => {
+      [path, glow].forEach(el => { el.style.strokeDashoffset = 0; });
+    });
+  }
+  function hide(){
+    svg.classList.remove('show');
+    if(spotlight) spotlight.classList.remove('show');
+  }
+
+  step.addEventListener('mouseenter', show);
+  step.addEventListener('mouseleave', hide);
+  step.addEventListener('focus', show);
+  step.addEventListener('blur',  hide);
+  // Keep the arrow + cutout aligned if the viewport size changes mid-hover.
+  window.addEventListener('resize', () => {
+    if(svg.classList.contains('show')){ drawPath(); updateHole(); }
+  });
+})();
 
 /* ════════════════════════════════════════════════════════════════
    LEAD GATE — captures email/phone before high-value actions and
@@ -2866,6 +3172,11 @@ async function runSpotCheck(partInput, payInput, discInput){
   document.body.classList.add('in-flow');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
+  // Spot-check skips the evidence stage (user typed every value), so
+  // step 1 marks immediately as done and we'll jump to step 3 in
+  // revealVerdict() below. setProgress(2) is shown briefly during the
+  // catalog match so the bar isn't a 1→3 jump.
+  setProgress(1);
 
   const scanStage = $('#stage-scan');
   scanStage.hidden = false;
@@ -2926,6 +3237,7 @@ async function runSpotCheck(partInput, payInput, discInput){
     await runDisambig(results);
   }
 
+  setProgress(2);
   setStatus('Calculating markup');
   await sleep(450);
 
@@ -3332,6 +3644,7 @@ async function launchFlow(file){
   document.body.classList.add('in-flow');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0, 0);
+  setProgress(1);
 
   const scanStage = $('#stage-scan');
   scanStage.hidden = false;
@@ -3363,6 +3676,7 @@ async function launchFlow(file){
   document.body.style.overflow = '';
 
   // Evidence stage is now the top of the page — no scroll required
+  setProgress(2);
   await runEvidence();
   // From here, user clicks "Reveal the markup" to advance
 }
@@ -3382,7 +3696,7 @@ function setStatus(txt){
 
 async function runRealScan(file){
   // 1. Send the file to Claude Vision via the PHP proxy
-  setStatus('Reading your document with AI');
+  setStatus('Reading your document');
   const fd = new FormData();
   fd.append('image', file);
   const aResp = await fetch(ANALYZE_URL, { method:'POST', body: fd });
@@ -3439,7 +3753,7 @@ async function runRealScan(file){
 
   // 3. Map match results into our internal item shape, dropping unmatched
   //    rows (we can't compute markup without a catalog MSRP).
-  //    The AI extraction prompt defines unitPrice as "Price per unit the
+  //    The extraction prompt defines unitPrice as "Price per unit the
   //    customer pays" — i.e., the post-discount price — so it maps to `pay`.
   const items = results
     .filter(r => r.matched && r.catalog && Number(r.catalog.price) > 0)
@@ -3516,6 +3830,11 @@ function runDisambig(results){
     const stage = $('#stage-scan');
     const panel = $('#scan-disambig');
     const list  = $('#disambig-list');
+    // Disambig is a confirmation step in the user's mental model
+    // (they're picking the right match), so advance the progress bar
+    // to "Edit & confirm" while this view is open. The evidence stage
+    // re-asserts setProgress(2) afterwards which is a no-op.
+    setProgress(2);
 
     // Build one card per ambiguous result. Indexes are tracked back to the
     // original results array via data-result-idx so live changes write
@@ -3830,6 +4149,7 @@ $('#reveal-verdict').addEventListener('click', revealVerdict);
 async function revealVerdict(){
   // Pull the user's current inputs into DEMO so the verdict shows their numbers
   recomputeFromInputs();
+  setProgress(3);
 
   // Re-target every animated number on the verdict + leak band, and reset
   // tween state so they count up fresh from 0 instead of being skipped.
@@ -4223,6 +4543,7 @@ $('#action-save').addEventListener('click', ()=>{
 
 $('#action-rescan').addEventListener('click', ()=>{
   flowStarted = false;
+  setProgress(1);
   // Reset to demo data so a re-launch starts clean
   activeInvoice = DEMO_INVOICE;
   DEMO = computeInvoice(activeInvoice);
