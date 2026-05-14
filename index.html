@@ -1710,6 +1710,10 @@ body.in-flow .example-strip{display:none}
 .translation-body{font-size:16px;line-height:1.65;color:var(--text-2);margin-bottom:14px}
 .translation-body strong{color:var(--text);font-weight:600;background:var(--truth-soft);padding:1px 5px;border-radius:3px}
 .translation-body em{color:var(--inflation);font-style:normal;font-weight:600}
+/* When the verdict is under-MSRP / fair, the body emphasis points to
+   savings, not losses — flip from inflation red to truth green so the
+   color matches the positive sentiment of the surrounding sentence. */
+.translation.is-fair .translation-body em{color:var(--truth)}
 
 /* Tertiary action chips — visible but secondary to the contact-form
    CTA above. Pill shape with a subtle surface fill, green-tinted icon
@@ -2349,7 +2353,7 @@ body.in-flow .example-strip{display:none}
 
   <!-- ─── STAGE B: EVIDENCE ──────────────────────────── -->
   <section class="stage stage-evidence" id="stage-evidence" hidden>
-    <h2 class="evidence-title">We pulled <em><span id="evidence-count">6</span> line items</em> from your invoice.</h2>
+    <h2 class="evidence-title">We pulled <em><span id="evidence-count">6</span><span id="evidence-of-total" hidden> of <span id="evidence-total">6</span></span> line items</em> from your invoice.</h2>
     <p class="evidence-sub">All matched to manufacturer pricing. <strong style="color:var(--text)">Edit any quantity, supplier list price, or stated discount</strong> — your line totals recalculate live. Hit reveal when ready.</p>
 
     <div class="evidence-split">
@@ -2703,7 +2707,11 @@ const DEMO_INVOICE = {
 function computeInvoice(inv){
   let paid=0, msrp=0, listSum=0;
   const rows = inv.items.map(it=>{
-    const supplierList = it.disc < 99 ? it.pay / (1 - it.disc/100) : it.pay;
+    // Prefer the scanner-captured list (matches the invoice cent-for-cent);
+    // fall back to deriving from pay/disc for demo/typed/spot-check items
+    // and any path where the document didn't expose a list column.
+    const supplierList = (it.list && it.list > 0) ? it.list
+      : (it.disc < 99 ? it.pay / (1 - it.disc/100) : it.pay);
     const lineYouPay   = it.pay * it.qty;
     const lineMsrp     = it.msrp * it.qty;
     const lineListSum  = supplierList * it.qty;
@@ -2745,7 +2753,16 @@ function recomputeFromInputs(){
     const qty  = Math.max(0, Number(el.querySelector('.ext-qty-in').value)  || 0);
     const pay  = Math.max(0, Number(el.querySelector('.ext-pay-in').value)  || 0);
     const disc = Math.max(0, Math.min(99, Number(el.querySelector('.ext-disc-in').value) || 0));
-    const supplierList = disc < 99 ? pay / (1 - disc/100) : pay;
+    // If the user hasn't touched pay/disc since the scan, use the invoice's
+    // actual list price so the displayed supplier list matches the document
+    // exactly. Once they edit either input, fall back to deriving from the
+    // current values (the user is now exploring scenarios, not viewing the
+    // scanned truth).
+    const useStoredList = orig.list && orig.list > 0
+      && Math.abs(pay  - orig.pay)  < 0.005
+      && Math.abs(disc - orig.disc) < 0.05;
+    const supplierList = useStoredList ? orig.list
+      : (disc < 99 ? pay / (1 - disc/100) : pay);
     const lineYouPay   = pay * qty;
     const lineMsrp     = orig.msrp * qty;
     const lineListSum  = supplierList * qty;
@@ -3803,8 +3820,7 @@ function appendEvidenceItem(cat, extracted){
   newRow.classList.add('show');
 
   // Update the headline count + the receipt card + DEMO totals.
-  const countEl = $('#evidence-count');
-  if(countEl) countEl.textContent = activeInvoice.items.length;
+  updateEvidenceCount();
   recomputeFromInputs();
 
   // Rebuild the per-category dropdown (apply-discount menu) so the new
@@ -3972,7 +3988,10 @@ async function launchFlow(file){
     }
   } catch(err) {
     console.error('Scan failed:', err);
-    showScanError(err.message || 'Something went wrong reading your document.');
+    showScanError(err.message || 'Something went wrong reading your document.', {
+      file,
+      retryWithFirstN: err.retryWithFirstN,
+    });
     return;
   }
 
@@ -4004,15 +4023,26 @@ function setStatus(txt){
   if(s) s.innerHTML = txt + '<span class="status-cursor"></span>';
 }
 
-async function runRealScan(file){
+async function runRealScan(file, opts){
   // 1. Send the file to Claude Vision via the PHP proxy
   setStatus('Reading your document');
   const fd = new FormData();
   fd.append('image', file);
+  // Opt-in cap from the "Scan first N pages" retry path. Server enforces the
+  // upper bound; we just forward whatever the caller requested.
+  if(opts && opts.firstNPages){
+    fd.append('firstNPages', String(opts.firstNPages));
+  }
   const aResp = await fetch(ANALYZE_URL, { method:'POST', body: fd });
   if(!aResp.ok){
     const err = await aResp.json().catch(()=>({}));
-    throw new Error(err.error || `Analyze failed (${aResp.status})`);
+    const e = new Error(err.error || `Analyze failed (${aResp.status})`);
+    // Surface page-count rejection so the error UI can offer a one-click
+    // "scan first N pages" retry instead of forcing the user to re-upload.
+    if(err && err.pageCount && err.maxPages && err.pageCount > err.maxPages){
+      e.retryWithFirstN = err.maxPages;
+    }
+    throw e;
   }
   const aData = await aResp.json();
   const extracted = Array.isArray(aData.items) ? aData.items : [];
@@ -4071,7 +4101,18 @@ async function runRealScan(file){
       const ext = r.extracted || {};
       const cat = r.catalog;
       const pay  = Number(ext.unitPrice) || 0;
-      const disc = Number(ext.discountPercent) || 0;
+      const list = Number(ext.listPrice) || 0;
+      let disc = Number(ext.discountPercent) || 0;
+      // When the document shows List + Net columns but no explicit "% off",
+      // derive the supplier's implied stated discount so the user doesn't
+      // have to retype it. We round to 1 decimal for a clean disc-input
+      // display, then stash the invoice's actual list on the item — the
+      // downstream supplier-list display uses `list` directly so it matches
+      // the invoice cent-for-cent (derivation alone drifts a few cents per
+      // line because of the disc rounding).
+      if(disc === 0 && list > pay && pay > 0){
+        disc = Math.round((list - pay) / list * 1000) / 10;
+      }
       const qty  = Math.max(1, Number(ext.quantity) || 1);
       return {
         part: cat.part || ext.partNumber || '',
@@ -4079,7 +4120,7 @@ async function runRealScan(file){
         // catName is the resolved human-readable category (e.g. "Body Shop")
         // — category is the raw abbreviation (e.g. "BSM"). Prefer the full name.
         category: cat.catName || cat.category || 'Uncategorized',
-        qty, pay, disc,
+        qty, pay, disc, list,
         msrp: Number(cat.price) || 0,
       };
     });
@@ -4105,7 +4146,25 @@ async function runRealScan(file){
     invoiceNum: '',
     date: '',
     items,
+    // Original Vision-extracted count, used by the evidence headline to
+    // surface "X of Y" when some lines didn't match the catalog.
+    extractedTotal: extracted.length,
   };
+}
+
+/* Sync the evidence headline's matched + total counts. Shows " of Y"
+   only when an extractedTotal is recorded AND it differs from the
+   current working item count — so the demo and Quick Lookup paths
+   (no filtering) keep the simple "X line items" phrasing. */
+function updateEvidenceCount(){
+  const countEl = $('#evidence-count');
+  const totalEl = $('#evidence-total');
+  const ofWrap  = $('#evidence-of-total');
+  const matched = activeInvoice.items.length;
+  const total   = Number(activeInvoice.extractedTotal) || 0;
+  if(countEl) countEl.textContent = matched;
+  if(totalEl) totalEl.textContent = total;
+  if(ofWrap)  ofWrap.hidden = !(total > 0 && total !== matched);
 }
 
 async function runDemoScan(){
@@ -4203,9 +4262,21 @@ function runDisambig(results){
   });
 }
 
-function showScanError(msg){
+function showScanError(msg, opts){
   const stage = $('#stage-scan');
-  setStatus(`<span style="color:var(--inflation)">${msg}</span> · <a href="#" id="scan-retry-link" style="color:var(--truth);text-decoration:underline">Try again</a>`);
+  const file        = opts && opts.file;
+  const firstNCap   = opts && opts.retryWithFirstN;
+  const linkStyle   = 'color:var(--truth);text-decoration:underline';
+
+  // When the server rejected because of page count, offer a one-click
+  // "scan first N pages" before the generic "Try again". The link is only
+  // rendered when we have both the original File reference and the cap the
+  // server reported, so the retry can re-submit with the right opt-in.
+  const firstNLink = (firstNCap && file)
+    ? `<a href="#" id="scan-firstn-link" style="${linkStyle}">Scan first ${firstNCap} pages instead</a> · `
+    : '';
+  setStatus(`<span style="color:var(--inflation)">${msg}</span> · ${firstNLink}<a href="#" id="scan-retry-link" style="${linkStyle}">Try again</a>`);
+
   const retry = document.getElementById('scan-retry-link');
   if(retry){
     retry.addEventListener('click', e=>{
@@ -4223,6 +4294,43 @@ function showScanError(msg){
       }, 450);
     });
   }
+
+  const firstN = document.getElementById('scan-firstn-link');
+  if(firstN){
+    firstN.addEventListener('click', async e=>{
+      e.preventDefault();
+      // Stay inside the scan overlay, reset visuals, and re-run the parse
+      // pipeline with firstNPages set. Reproduces the post-scan commit from
+      // launchFlow rather than calling back into it, because launchFlow's
+      // flowStarted guard + overlay-entry choreography assume a fresh entry.
+      $$('.scan-tick').forEach(el=>el.classList.remove('show'));
+      $$('.num-tween', stage).forEach(el=>{ el.dataset.tweened=''; el.dataset.from='0'; el.textContent='0'; });
+      setStatus('Reading your document');
+
+      let parsedInvoice;
+      try {
+        parsedInvoice = await runRealScan(file, { firstNPages: firstNCap });
+      } catch(err){
+        console.error('First-N-pages retry failed:', err);
+        showScanError(err.message || 'Something went wrong reading your document.', {
+          file,
+          retryWithFirstN: err.retryWithFirstN,
+        });
+        return;
+      }
+
+      activeInvoice = parsedInvoice;
+      DEMO = computeInvoice(activeInvoice);
+
+      stage.classList.remove('visible');
+      await sleep(450);
+      stage.hidden = true;
+      document.body.style.overflow = '';
+
+      setProgress(2);
+      await runEvidence();
+    });
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -4235,8 +4343,7 @@ async function runEvidence(){
   // No scrollIntoView — flow has just opened and the stage IS the top of the page now.
 
   $('#inv-supplier').textContent = activeInvoice.supplier;
-  const countEl = $('#evidence-count');
-  if(countEl) countEl.textContent = activeInvoice.items.length;
+  updateEvidenceCount();
   // Build the extracted list with editable inputs
   const list = $('#extracted-list');
   list.innerHTML = DEMO.rows.map((r,i)=>`
@@ -4312,8 +4419,7 @@ async function runEvidence(){
       row.classList.add('removing');
       setTimeout(()=>{
         row.remove();
-        const countEl = $('#evidence-count');
-        if(countEl) countEl.textContent = activeInvoice.items.length;
+        updateEvidenceCount();
         recomputeFromInputs();
         if(typeof rebuildDiscMenuItems === 'function') rebuildDiscMenuItems();
       }, 250);
@@ -4764,6 +4870,11 @@ async function runResolution(){
   const padAmt = Math.abs(DEMO.markup);
   const annual = padAmt * cadMult;
   const stated = DEMO.statedDisc;
+
+  // Flip the body emphasis from inflation red to truth green when the
+  // sentiment is positive (under-MSRP or exact-match). The color was
+  // contradicting the words otherwise.
+  $('.translation')?.classList.toggle('is-fair', DEMO.markup <= 0);
 
   // Translation copy must follow the same sentiment branch as the verdict
   // headline — otherwise "your supplier inflated their list" plays under a

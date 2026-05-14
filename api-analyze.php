@@ -20,6 +20,32 @@ define('IFS_INTERNAL', true);
 require __DIR__ . '/_ratelimit.php';
 require __DIR__ . '/_check_origin.php';
 
+// PHP's max_execution_time defaults to 30s on the built-in dev server, but
+// the Vision call on a multi-page PDF legitimately needs longer. Bump to
+// 180s so curl_exec() can finish; cURL caps itself at 150s below so a slow
+// upstream surfaces as a clean error path rather than a PHP fatal.
+@set_time_limit(180);
+
+// Fatal-error guard. If anything below trips a fatal (exec time exceeded,
+// memory exhausted, parse error in a required file), PHP's default response
+// is an HTML error block — which JSON.parse on the client chokes on with
+// "Unexpected token '<'". Emit a JSON body instead so the front end can
+// surface a meaningful message.
+register_shutdown_function(function() {
+    $err = error_get_last();
+    if (!$err || !in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) return;
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+    }
+    $msg = (stripos($err['message'], 'Maximum execution time') !== false
+         || stripos($err['message'], 'Allowed memory size') !== false)
+        ? 'Document is too large or has too many pages. Try uploading a single invoice (under ~10 pages).'
+        : 'Server error while reading the document. Please try again.';
+    echo json_encode(['error' => $msg]);
+});
+
 // ─── Configuration ───────────────────────────────────────────
 $allowedHost = 'industrialfinishes.com';
 $apiKey      = getenv('ANTHROPIC_API_KEY');
@@ -109,22 +135,70 @@ if ($mimeType === null || !isset($allowedTypes[$mimeType])) {
 
 $fileKind    = $allowedTypes[$mimeType]; // 'image' or 'document'
 $fileData    = file_get_contents($file['tmp_name']);
+
+// Page count guard for PDFs. The tool's data model assumes one invoice per
+// upload — batch scans (multiple invoices merged into one PDF) blow past
+// max_tokens, mix line items across suppliers/dates, and burn vision-API
+// budget. Cap at 10 pages so padded single invoices still work but batch
+// dumps fail fast. Counts /Type /Page object markers in the raw bytes —
+// cheap and works on flat scanned PDFs; some heavily compressed PDFs may
+// undercount, but that errs toward accepting borderline files rather than
+// blocking valid ones.
+// Optional client-side opt-in to scan only the first N pages of an oversized
+// PDF (e.g. user uploaded a batch scan and chose "Scan first 10 pages" on the
+// error screen). Bounded by $maxPages below so the bypass can't exceed the
+// page guard's intent.
+$firstNPages = isset($_POST['firstNPages']) ? (int) $_POST['firstNPages'] : 0;
+$pageLimit   = 0; // 0 = no limit; set below if firstNPages bypass is active
+
+if ($mimeType === 'application/pdf') {
+    $maxPages = 10;
+    $pageCount = preg_match_all('/\/Type\s*\/Page[^s]/', $fileData);
+    if ($pageCount > $maxPages) {
+        if ($firstNPages > 0 && $firstNPages <= $maxPages) {
+            // User explicitly opted to scan only the first N pages. Pass the
+            // full PDF to Claude but instruct it to ignore pages past N below.
+            // Note: input-token cost still reflects all pages (Claude reads the
+            // whole document); the benefit is bounded output and reduced
+            // cross-invoice contamination.
+            $pageLimit = $firstNPages;
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'error'     => "This PDF has {$pageCount} pages. Please upload a single invoice (max {$maxPages} pages). For batch scans, split the file and upload one invoice at a time.",
+                'pageCount' => $pageCount,
+                'maxPages'  => $maxPages,
+            ]);
+            exit;
+        }
+    }
+}
+
 $base64Data  = base64_encode($fileData);
 
 // ─── Build Claude API Request ───────────────────────────────
 $prompt = 'You are analyzing a supplier pricing document (invoice, quote, or price list) for industrial paint and coatings products. Extract every line item you can find.
 
 For each item, extract:
-- partNumber: The part/item/SKU number (look for columns labeled Part #, Item #, SKU, Product Code, etc.)
+- partNumber: The part/item/SKU number from the part-number column ONLY (look for columns labeled Part #, Item #, SKU, Product Code, etc.). If the invoice has a separate manufacturer/brand column (often labeled H/M, Brand, Mfr, Mfg, or Vendor) printed adjacent to the part-number column with values like "3M", "PPG", "SEM", "AX", do NOT include that brand code in partNumber — extract only the part-number column value.
 - description: Product name/description
 - quantity: Number of units (default 1 if not shown)
-- unitPrice: Price per unit the customer pays (numeric, no $ sign)
-- discountPercent: Discount percentage if shown (numeric, no % sign; 0 if not listed)
+- unitPrice: Per-unit price the customer pays AFTER any discount (numeric, no $ sign). Often labeled Net, Unit Price, Your Price, or Price Each.
+- listPrice: Per-unit list/retail price BEFORE any discount (numeric, no $ sign). Look for columns labeled List, List Price, MSRP, Retail, or SRP. Return 0 if not on the document.
+- discountPercent: Explicit discount percentage if printed on the document (numeric, no % sign; 0 if not listed). Do NOT calculate this yourself from list and net — only report it when the document shows an actual "% off" value.
 
 Return ONLY a JSON array with no markdown formatting, no code fences, no other text:
-[{"partNumber":"...","description":"...","quantity":1,"unitPrice":0.00,"discountPercent":0}]
+[{"partNumber":"...","description":"...","quantity":1,"unitPrice":0.00,"listPrice":0.00,"discountPercent":0}]
 
 If you cannot find any line items, return an empty array: []';
+
+// Page-range cap. When the user opted in to scanning only the first N pages
+// of an oversized PDF, prepend a strict instruction so Vision ignores items
+// past page N. This keeps the output bounded and avoids mixing line items
+// across the multiple invoices that batch-scan PDFs typically contain.
+if ($pageLimit > 0) {
+    $prompt = "STRICT PAGE LIMIT: This PDF has multiple pages, but you must ONLY extract line items from the FIRST {$pageLimit} PAGES. Completely ignore anything on page " . ($pageLimit + 1) . " or later — do NOT include those items in your output, even if they look like valid line items.\n\n" . $prompt;
+}
 
 // Build the file content block — 'image' or 'document' type
 if ($fileKind === 'document') {
@@ -185,7 +259,7 @@ $claudeHeaders = [
 ];
 $claudeBody    = json_encode($payload);
 
-$apiResult = postJsonToClaude($claudeUrl, $claudeHeaders, $claudeBody, 60);
+$apiResult = postJsonToClaude($claudeUrl, $claudeHeaders, $claudeBody, 150);
 
 // On DNS resolution failure (errno 6 = CURLE_COULDNT_RESOLVE_HOST), bypass the
 // system resolver via DNS-over-HTTPS and retry with the IP pinned. Some
@@ -197,7 +271,7 @@ if ($apiResult['error'] && (int)($apiResult['errno'] ?? 0) === 6) {
     if ($ip) {
         error_log("[api-analyze] local DNS failed for api.anthropic.com; retrying via DoH-resolved IP $ip");
         $apiResult = postJsonToClaude(
-            $claudeUrl, $claudeHeaders, $claudeBody, 60,
+            $claudeUrl, $claudeHeaders, $claudeBody, 150,
             ['api.anthropic.com:443:' . $ip]
         );
     }
@@ -258,6 +332,7 @@ foreach ($items as $item) {
         'description'     => isset($item['description']) ? (string) $item['description'] : '',
         'quantity'        => isset($item['quantity']) ? max(1, (int) $item['quantity']) : 1,
         'unitPrice'       => isset($item['unitPrice']) ? round((float) $item['unitPrice'], 2) : 0,
+        'listPrice'       => isset($item['listPrice']) ? max(0, round((float) $item['listPrice'], 2)) : 0,
         'discountPercent' => isset($item['discountPercent']) ? min(99, max(0, (int) $item['discountPercent'])) : 0,
     ];
 }

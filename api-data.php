@@ -435,6 +435,12 @@ function handleMatch($catalog, $maxItems) {
     // 4-char minimum to avoid spurious matches on short stems (e.g. "100" → "100-X").
     $partIndex   = [];
     $prefixIndex = [];
+    // Suffix-stem index — catalog parts WITHOUT separators that end in a 2-3
+    // char alphabetic size code (LE3504SGL = LE3504S + GL, LE1005SQT = LE1005S
+    // + QT). Lets an invoice list the base ("LE3504S") match the sized catalog
+    // entry. Min stem 5 chars so generic short stems can't sweep in unrelated
+    // SKUs.
+    $suffixStemIndex = [];
     foreach ($catalog as $i => $r) {
         $norm = normalizePartNum($r['part']);
         if ($norm !== '') {
@@ -446,6 +452,20 @@ function handleMatch($catalog, $maxItems) {
                 $prefix = $m[1];
                 if (!isset($prefixIndex[$prefix])) $prefixIndex[$prefix] = [];
                 $prefixIndex[$prefix][] = $i;
+            }
+
+            // Suffix-stem entries only for separator-free catalog parts (the
+            // separator case is already covered by prefixIndex above).
+            if (strpbrk($orig, '-./') === false) {
+                $len = strlen($norm);
+                for ($cut = 2; $cut <= 3; $cut++) {
+                    if ($len - $cut < 5) break;
+                    $tail = substr($norm, -$cut);
+                    if (!ctype_alpha($tail)) continue;
+                    $stem = substr($norm, 0, $len - $cut);
+                    if (!isset($suffixStemIndex[$stem])) $suffixStemIndex[$stem] = [];
+                    $suffixStemIndex[$stem][] = $i;
+                }
             }
         }
     }
@@ -483,6 +503,44 @@ function handleMatch($catalog, $maxItems) {
         if (count($matchOptions) === 0 && $normPart !== '' && isset($prefixIndex[$normPart])) {
             foreach (array_slice($prefixIndex[$normPart], 0, $maxOptions) as $idx) {
                 $matchOptions[] = $catalog[$idx];
+            }
+        }
+
+        // 1c. Size-suffix-stem fallback. Catalog parts often append a 2-3 char
+        //     size code with no separator (Axalta Cromax "LE3504SGL" = LE3504S
+        //     base + GL gallon, "LE1005SQT" = LE1005S + QT). When the invoice
+        //     lists only the base, 1b misses it (no separator). suffixStemIndex
+        //     keys those catalog entries under their size-stripped stems.
+        if (count($matchOptions) === 0 && $normPart !== '' && isset($suffixStemIndex[$normPart])) {
+            foreach (array_slice(array_unique($suffixStemIndex[$normPart]), 0, $maxOptions) as $idx) {
+                $matchOptions[] = $catalog[$idx];
+            }
+        }
+
+        // 1d. Brand-prefix fallback. Some invoice layouts (e.g. Annex Modern)
+        //     put the manufacturer in a separate column adjacent to the part
+        //     number — "3M" | "34343", "DUP" | "LE3504S" — and Vision can grab
+        //     the brand token into partNumber as "3M 34343" / "DUP LE3504S".
+        //     When the raw extracted value contains whitespace and nothing
+        //     matched yet, retry all three indexes with everything before the
+        //     first space stripped. Safe because real catalog part numbers
+        //     don't carry internal whitespace.
+        if (count($matchOptions) === 0 && preg_match('/^\S+\s+(\S.*)$/', trim($extPart), $brandM)) {
+            $altPart = normalizePartNum($brandM[1]);
+            if ($altPart !== '' && $altPart !== $normPart) {
+                if (isset($partIndex[$altPart])) {
+                    foreach (array_slice($partIndex[$altPart], 0, $maxOptions) as $idx) {
+                        $matchOptions[] = $catalog[$idx];
+                    }
+                } elseif (isset($prefixIndex[$altPart])) {
+                    foreach (array_slice($prefixIndex[$altPart], 0, $maxOptions) as $idx) {
+                        $matchOptions[] = $catalog[$idx];
+                    }
+                } elseif (isset($suffixStemIndex[$altPart])) {
+                    foreach (array_slice(array_unique($suffixStemIndex[$altPart]), 0, $maxOptions) as $idx) {
+                        $matchOptions[] = $catalog[$idx];
+                    }
+                }
             }
         }
 
